@@ -100,6 +100,11 @@ def load_invitees():
     return []
 
 
+def save_invitees(invitees):
+    with open(INVITEES_FILE, "w", encoding="utf-8") as f:
+        json.dump(invitees, f, ensure_ascii=False, indent=2)
+
+
 def load_responses():
     if os.path.exists(RESPONSES_FILE):
         with open(RESPONSES_FILE, "r", encoding="utf-8") as f:
