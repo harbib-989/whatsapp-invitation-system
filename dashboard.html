@@ -694,8 +694,8 @@
                 <!-- إرسال جماعي -->
                 <div class="bulk-area">
                     <label style="font-size:13px; font-weight:600; color:#666;">إرسال جماعي (كل سطر: الاسم، رقم الجوال)</label>
-                    <p class="bulk-hint">مثال: أحمد محمد، 0551234567</p>
-                    <textarea id="bulkList" placeholder="أحمد محمد، 0551234567&#10;سارة علي، 0559876543&#10;خالد حسن، 0567891234"></textarea>
+                    <p class="bulk-hint">كل سطر مدعو واحد. الفصل بـ: فاصلة أو شرطة أو مسافات. مثال: أحمد محمد ، 0551234567</p>
+                    <textarea id="bulkList" placeholder="أحمد محمد ، 0551234567&#10;سارة علي - 0559876543&#10;خالد حسن  0567891234"></textarea>
                     <button class="btn-send" id="bulkBtn" onclick="sendBulk()" style="margin-top:10px;">
                         📤 إرسال جماعي
                     </button>
@@ -1122,12 +1122,23 @@
             const recipients = [];
 
             for (const line of lines) {
-                const parts = line.split(/[,،]/);
+                // يدعم الفصل بـ: فاصلة ، - | تاب أو مسافات متعددة
+                const parts = line.split(/[,،\-\|\t]+|\s{2,}/);
                 if (parts.length >= 2) {
-                    recipients.push({
-                        name: parts[0].trim(),
-                        phone: parts[1].trim()
-                    });
+                    const name = parts[0].trim();
+                    // البحث عن الرقم في أي جزء
+                    let phone = '';
+                    for (let i = 1; i < parts.length; i++) {
+                        const cleaned = parts[i].trim().replace(/\s/g, '');
+                        if (/^[\d\+]{9,15}$/.test(cleaned)) {
+                            phone = cleaned;
+                            break;
+                        }
+                    }
+                    if (!phone) phone = parts[1].trim();
+                    if (name && phone) {
+                        recipients.push({ name, phone });
+                    }
                 }
             }
 
