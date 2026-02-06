@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+venv/
+.env
+
+# Data files (created at runtime)
+responses.json
+invitees.json
+config.json
+send_log.txt
+webhook_log.txt
+send_results_*.csv
+
+# System
+.DS_Store
+Thumbs.db
+*.code-workspace
+
+# Docs (not needed on server)
+QUICK_START_CURSOR.md
+INSTRUCTIONS.txt
+whatsapp_complete_guide.txt
+whatsapp_message.txt
+whatsapp_interactive_guide.html

@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تأكيد الحضور - الكلية التقنية</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, #075E54 0%, #128C7E 50%, #25D366 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: #fff;
+            border-radius: 24px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            animation: slideUp 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            background: linear-gradient(135deg, #075E54, #128C7E);
+            padding: 28px 25px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            color: #fff;
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .header p {
+            color: rgba(255,255,255,0.8);
+            font-size: 14px;
+        }
+
+        .back-link {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover { color: #fff; }
+
+        .form-body {
+            padding: 30px 25px;
+        }
+
+        .form-group {
+            margin-bottom: 22px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #333;
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .form-group label .required {
+            color: #e74c3c;
+            margin-right: 2px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e8e8e8;
+            border-radius: 12px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 15px;
+            color: #333;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            background: #fafafa;
+            direction: rtl;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #25D366;
+            box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.15);
+            background: #fff;
+        }
+
+        .form-group input.error {
+            border-color: #e74c3c;
+            box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+        }
+
+        .error-text {
+            color: #e74c3c;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .form-group input.error + .error-text {
+            display: block;
+        }
+
+        .form-group .hint {
+            color: #999;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .radio-option {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .radio-option input[type="radio"] {
+            display: none;
+        }
+
+        .radio-option label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px;
+            border: 2px solid #e8e8e8;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            font-weight: 500;
+            background: #fafafa;
+        }
+
+        .radio-option input[type="radio"]:checked + label {
+            border-color: #25D366;
+            background: #f0faf4;
+            color: #075E54;
+        }
+
+        .radio-option label:hover {
+            border-color: #25D366;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #25D366, #128C7E);
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(37, 211, 102, 0.5);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Success State */
+        .success-screen {
+            display: none;
+            text-align: center;
+            padding: 50px 25px;
+        }
+
+        .success-screen.active {
+            display: block;
+            animation: fadeIn 0.6s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .success-icon {
+            width: 90px;
+            height: 90px;
+            background: linear-gradient(135deg, #25D366, #128C7E);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0); }
+            60% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+
+        .success-icon svg {
+            width: 45px;
+            height: 45px;
+            fill: #fff;
+        }
+
+        .success-screen h2 {
+            color: #075E54;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .success-screen p {
+            color: #666;
+            font-size: 15px;
+            line-height: 1.7;
+            margin-bottom: 20px;
+        }
+
+        .success-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn-secondary {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px;
+            background: #f0faf4;
+            color: #075E54;
+            border: 2px solid #25D366;
+            border-radius: 12px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .btn-secondary:hover {
+            background: #25D366;
+            color: #fff;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 16px;
+            background: #f9f9f9;
+            border-top: 1px solid #eee;
+        }
+
+        .footer p {
+            color: #999;
+            font-size: 12px;
+        }
+
+        @media (max-width: 500px) {
+            body { padding: 10px; }
+            .container { border-radius: 18px; }
+            .form-body { padding: 24px 18px; }
+            .radio-group { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="whatsapp_invitation.html" class="back-link">→ العودة</a>
+            <h1>تأكيد الحضور</h1>
+            <p>حفل تخريج الدفعة ٢٠٢٦ - الكلية التقنية</p>
+        </div>
+
+        <!-- Form Screen -->
+        <div class="form-body" id="formScreen">
+            <form id="attendanceForm" novalidate>
+                <div class="form-group">
+                    <label><span class="required">*</span> الاسم الكامل</label>
+                    <input type="text" id="fullName" placeholder="أدخل اسمك الكامل" required>
+                    <p class="error-text">يرجى إدخال الاسم الكامل</p>
+                </div>
+
+                <div class="form-group">
+                    <label><span class="required">*</span> رقم الجوال</label>
+                    <input type="tel" id="phone" placeholder="05XXXXXXXX" required dir="ltr" style="text-align: right;">
+                    <p class="error-text">يرجى إدخال رقم جوال صحيح (05XXXXXXXX)</p>
+                    <p class="hint">أدخل رقم الجوال بصيغة 05 ثم 8 أرقام</p>
+                </div>
+
+                <div class="form-group">
+                    <label>الحالة</label>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <input type="radio" name="status" id="statusAccept" value="تم القبول" checked>
+                            <label for="statusAccept">✅ سأحضر</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" name="status" id="statusDecline" value="اعتذار">
+                            <label for="statusDecline">❌ أعتذر</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>ملاحظات (اختياري)</label>
+                    <textarea id="notes" rows="3" placeholder="أي ملاحظات أو طلبات خاصة..."></textarea>
+                </div>
+
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                    إرسال التأكيد
+                </button>
+            </form>
+        </div>
+
+        <!-- Success Screen -->
+        <div class="success-screen" id="successScreen">
+            <div class="success-icon">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+            </div>
+            <h2>تم التأكيد بنجاح!</h2>
+            <p>شكراً لتأكيد حضورك. سنكون سعداء بلقائك في الحفل.</p>
+            <div class="success-actions">
+                <a href="whatsapp_invitation.html" class="btn-secondary">
+                    ← العودة إلى الدعوة
+                </a>
+                <a href="dashboard.html" class="btn-secondary">
+                    📊 عرض لوحة المتابعة
+                </a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>الكلية التقنية بالأحساء - المؤسسة العامة للتدريب التقني والمهني</p>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('attendanceForm');
+        const formScreen = document.getElementById('formScreen');
+        const successScreen = document.getElementById('successScreen');
+
+        // Phone number validation (Saudi format)
+        function isValidPhone(phone) {
+            const cleaned = phone.replace(/[\s\-]/g, '');
+            return /^05\d{8}$/.test(cleaned);
+        }
+
+        // Show/hide error
+        function setError(input, show) {
+            if (show) {
+                input.classList.add('error');
+            } else {
+                input.classList.remove('error');
+            }
+        }
+
+        // Real-time validation
+        document.getElementById('fullName').addEventListener('input', function() {
+            setError(this, this.value.trim().length < 2);
+        });
+
+        document.getElementById('phone').addEventListener('input', function() {
+            // Allow only digits
+            this.value = this.value.replace(/[^\d]/g, '');
+            if (this.value.length > 10) this.value = this.value.slice(0, 10);
+            if (this.value.length === 10) {
+                setError(this, !isValidPhone(this.value));
+            }
+        });
+
+        // Form submission
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('fullName').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const status = document.querySelector('input[name="status"]:checked').value;
+            const notes = document.getElementById('notes').value.trim();
+
+            // Validate
+            let hasError = false;
+
+            if (name.length < 2) {
+                setError(document.getElementById('fullName'), true);
+                hasError = true;
+            }
+
+            if (!isValidPhone(phone)) {
+                setError(document.getElementById('phone'), true);
+                hasError = true;
+            }
+
+            if (hasError) return;
+
+            // Save to localStorage
+            const responses = JSON.parse(localStorage.getItem('eventResponses') || '[]');
+            const now = new Date();
+            const response = {
+                id: Date.now(),
+                name: name,
+                phone: phone,
+                seat: '-',
+                status: status,
+                notes: notes,
+                timestamp: now.toLocaleString('ar-SA', {
+                    year: 'numeric', month: 'numeric', day: 'numeric',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit'
+                })
+            };
+
+            responses.push(response);
+            localStorage.setItem('eventResponses', JSON.stringify(responses));
+
+            // Show success
+            formScreen.style.display = 'none';
+            successScreen.classList.add('active');
+        });
+    </script>
+</body>
+</html>
