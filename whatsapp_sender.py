@@ -195,8 +195,6 @@ def setup_content_template(client):
             raise Exception(f"HTTP {response.status_code}: {response.text}")
 
         content_sid = response.json().get("sid")
-
-        content_sid = content.sid
         config["content_sid"] = content_sid
         save_config(config)
         logger.info(f"  ✅ تم إنشاء القالب: {content_sid}")
