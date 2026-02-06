@@ -17,6 +17,7 @@ import csv
 import logging
 import threading
 import time
+import requests as http_requests
 from datetime import datetime
 from io import StringIO
 
@@ -377,8 +378,6 @@ def format_saudi_phone(phone):
 
 def get_or_create_template():
     """جلب أو إنشاء قالب الدعوة التفاعلي"""
-    import requests as http_requests
-
     # التحقق من وجود قالب محفوظ
     if os.path.exists(CONFIG_FILE):
         with open(CONFIG_FILE, "r", encoding="utf-8") as f:
