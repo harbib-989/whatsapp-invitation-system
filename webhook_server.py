@@ -66,6 +66,7 @@ EVENT_LOCATION = "قاعة الاحتفالات الرئيسية - الكلية 
 
 INVITEES_FILE = "invitees.json"
 RESPONSES_FILE = "responses.json"
+CONFIG_FILE = "config.json"
 
 # ============================================================
 # إعداد التسجيل
@@ -350,6 +351,211 @@ def api_export_csv():
             "Content-Disposition": f"attachment; filename=responses_{datetime.now().strftime('%Y%m%d')}.csv"
         }
     )
+
+
+# ============================================================
+# إرسال الدعوات من لوحة التحكم
+# ============================================================
+
+def format_saudi_phone(phone):
+    """تنسيق رقم الهاتف السعودي"""
+    phone = "".join(c for c in str(phone) if c.isdigit())
+    if not phone:
+        return None
+    if phone.startswith("05") and len(phone) == 10:
+        phone = "966" + phone[1:]
+    elif phone.startswith("5") and len(phone) == 9:
+        phone = "966" + phone
+    elif phone.startswith("00966"):
+        phone = phone[2:]
+    elif phone.startswith("966") and len(phone) == 12:
+        pass
+    if len(phone) != 12 or not phone.startswith("966"):
+        return None
+    return phone
+
+
+def get_or_create_template():
+    """جلب أو إنشاء قالب الدعوة التفاعلي"""
+    import requests as http_requests
+
+    # التحقق من وجود قالب محفوظ
+    if os.path.exists(CONFIG_FILE):
+        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            config = json.load(f)
+        if config.get("content_sid"):
+            return config["content_sid"]
+
+    # إنشاء قالب جديد
+    body_text = (
+        '🎓 *دعوة رسمية*\n\n'
+        'المكرم *{{1}}* حفظه الله\n'
+        'السلام عليكم ورحمة الله وبركاته\n\n'
+        'يسرّنا دعوتكم لحضور *' + EVENT_NAME + '*\n\n'
+        '📅 التاريخ: ' + EVENT_DATE + '\n'
+        '🕐 الوقت: ' + EVENT_TIME + '\n'
+        '📍 المكان: ' + EVENT_LOCATION + '\n\n'
+        'حضوركم يُسعدنا ويُشرّفنا 🌹\n\n'
+        '_الكلية التقنية بالأحساء_\n'
+        '_المؤسسة العامة للتدريب التقني والمهني_'
+    )
+
+    template_data = {
+        "friendly_name": "dashboard_invite_" + datetime.now().strftime("%Y%m%d%H%M%S"),
+        "language": "ar",
+        "variables": {"1": "اسم المدعو"},
+        "types": {
+            "twilio/quick-reply": {
+                "body": body_text,
+                "actions": [
+                    {"title": "✅ تأكيد الحضور", "id": "accept"},
+                    {"title": "❌ اعتذار", "id": "decline"}
+                ]
+            },
+            "twilio/text": {
+                "body": body_text + "\n\nللرد: اكتب تأكيد أو اعتذار"
+            }
+        }
+    }
+
+    try:
+        resp = http_requests.post(
+            "https://content.twilio.com/v1/Content",
+            data=json.dumps(template_data),
+            headers={"Content-Type": "application/json"},
+            auth=(ACCOUNT_SID, AUTH_TOKEN)
+        )
+        if resp.status_code == 201:
+            sid = resp.json().get("sid")
+            config = {"content_sid": sid}
+            with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+                json.dump(config, f, ensure_ascii=False, indent=2)
+            return sid
+    except Exception:
+        pass
+    return None
+
+
+def send_single_invitation(to_phone, name, content_sid=None):
+    """إرسال دعوة واحدة"""
+    client = Client(ACCOUNT_SID, AUTH_TOKEN)
+
+    # محاولة بالأزرار
+    if content_sid:
+        try:
+            msg = client.messages.create(
+                content_sid=content_sid,
+                content_variables=json.dumps({"1": name}),
+                from_=FROM_PHONE,
+                to=f"whatsapp:+{to_phone}"
+            )
+            return True, msg.sid, "buttons"
+        except Exception:
+            pass
+
+    # بديل نصي
+    body = (
+        f"🎓 *دعوة رسمية*\n\n"
+        f"المكرم *{name}* حفظه الله\n"
+        f"السلام عليكم ورحمة الله وبركاته\n\n"
+        f"يسرّنا دعوتكم لحضور *{EVENT_NAME}*\n\n"
+        f"📅 التاريخ: {EVENT_DATE}\n"
+        f"🕐 الوقت: {EVENT_TIME}\n"
+        f"📍 المكان: {EVENT_LOCATION}\n\n"
+        f"حضوركم يُسعدنا ويُشرّفنا 🌹\n\n"
+        f"─────────────────\n"
+        f"📩 *للرد على الدعوة:*\n"
+        f"اكتب *تأكيد* أو *1* ← للحضور ✅\n"
+        f"اكتب *اعتذار* أو *2* ← للاعتذار ❌"
+    )
+
+    try:
+        msg = client.messages.create(body=body, from_=FROM_PHONE, to=f"whatsapp:+{to_phone}")
+        return True, msg.sid, "text"
+    except Exception as e:
+        return False, str(e), "error"
+
+
+@app.route("/api/send", methods=["POST"])
+def api_send_invitation():
+    """إرسال دعوة من لوحة التحكم"""
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "بيانات غير صالحة"}), 400
+
+    name = data.get("name", "").strip()
+    phone = data.get("phone", "").strip()
+
+    if not name or not phone:
+        return jsonify({"success": False, "error": "الاسم والرقم مطلوبان"}), 400
+
+    formatted = format_saudi_phone(phone)
+    if not formatted:
+        return jsonify({"success": False, "error": "رقم الهاتف غير صحيح"}), 400
+
+    # حفظ المدعو
+    invitees = load_invitees()
+    if not any(inv.get("phone") == formatted for inv in invitees):
+        invitees.append({
+            "name": name, "phone": formatted,
+            "department": data.get("department", ""),
+            "invited_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+        save_invitees(invitees)
+
+    # إرسال الدعوة
+    content_sid = get_or_create_template()
+    success, result, msg_type = send_single_invitation(formatted, name, content_sid)
+
+    if success:
+        logger.info(f"📨 تم إرسال دعوة إلى {name} ({formatted}) من لوحة التحكم")
+        return jsonify({"success": True, "sid": result, "type": msg_type})
+    else:
+        return jsonify({"success": False, "error": result}), 500
+
+
+@app.route("/api/send-bulk", methods=["POST"])
+def api_send_bulk():
+    """إرسال جماعي من لوحة التحكم"""
+    data = request.get_json()
+    recipients = data.get("recipients", [])
+
+    if not recipients:
+        return jsonify({"success": False, "error": "لا يوجد مستلمون"}), 400
+
+    content_sid = get_or_create_template()
+    results = []
+    invitees = load_invitees()
+    existing_phones = {inv.get("phone") for inv in invitees}
+
+    for r in recipients:
+        name = r.get("name", "").strip()
+        phone = format_saudi_phone(r.get("phone", ""))
+        if not name or not phone:
+            results.append({"name": name, "status": "خطأ", "error": "بيانات غير صالحة"})
+            continue
+
+        if phone not in existing_phones:
+            invitees.append({
+                "name": name, "phone": phone,
+                "department": r.get("department", ""),
+                "invited_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            })
+            existing_phones.add(phone)
+
+        success, result, msg_type = send_single_invitation(phone, name, content_sid)
+        if success:
+            results.append({"name": name, "phone": phone, "status": "نجاح", "type": msg_type})
+        else:
+            results.append({"name": name, "phone": phone, "status": "فشل", "error": result})
+
+        time.sleep(1)  # تأخير بين الرسائل
+
+    save_invitees(invitees)
+    success_count = len([r for r in results if r["status"] == "نجاح"])
+    logger.info(f"📤 إرسال جماعي: {success_count}/{len(results)} نجاح")
+
+    return jsonify({"success": True, "results": results, "sent": success_count, "total": len(results)})
 
 
 # ============================================================
