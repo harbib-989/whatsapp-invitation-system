@@ -163,20 +163,38 @@ def setup_content_template(client):
     )
 
     try:
-        content = client.content.v1.contents.create(
-            friendly_name="graduation_invitation_" + datetime.now().strftime("%Y%m%d%H%M%S"),
-            language="ar",
-            variables={"1": "اسم المدعو"},
-            types={
+        import requests as http_requests
+
+        # استخدام Twilio Content API مباشرة (HTTP)
+        template_data = {
+            "friendly_name": "graduation_invitation_" + datetime.now().strftime("%Y%m%d%H%M%S"),
+            "language": "ar",
+            "variables": {"1": "اسم المدعو"},
+            "types": {
                 "twilio/quick-reply": {
                     "body": body_text,
                     "actions": [
-                        {"type": "quick_reply", "title": "✅ تأكيد الحضور", "id": "accept"},
-                        {"type": "quick_reply", "title": "❌ اعتذار", "id": "decline"}
+                        {"title": "✅ تأكيد الحضور", "id": "accept"},
+                        {"title": "❌ اعتذار", "id": "decline"}
                     ]
+                },
+                "twilio/text": {
+                    "body": body_text + "\n\nللرد: اكتب تأكيد أو اعتذار"
                 }
             }
+        }
+
+        response = http_requests.post(
+            "https://content.twilio.com/v1/Content",
+            data=json.dumps(template_data),
+            headers={"Content-Type": "application/json"},
+            auth=(ACCOUNT_SID, AUTH_TOKEN)
         )
+
+        if response.status_code != 201:
+            raise Exception(f"HTTP {response.status_code}: {response.text}")
+
+        content_sid = response.json().get("sid")
 
         content_sid = content.sid
         config["content_sid"] = content_sid
