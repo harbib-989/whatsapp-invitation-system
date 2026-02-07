@@ -60,10 +60,10 @@ ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID", "")
 AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "")
 FROM_PHONE = os.environ.get("TWILIO_FROM_PHONE", "whatsapp:+14155238886")
 
-EVENT_NAME = "حفل تخريج الدفعة ٢٠٢٦"
-EVENT_DATE = "الأحد ١٥ شعبان ١٤٤٧هـ"
-EVENT_TIME = "٧:٠٠ مساءً"
-EVENT_LOCATION = "قاعة الاحتفالات الرئيسية - الكلية التقنية بالأحساء"
+EVENT_NAME = "حوار: دور الرؤية في تعزيز الهوية الوطنية"
+EVENT_DATE = "الإثنين ٢١ شعبان ١٤٤٧هـ"
+EVENT_TIME = "١٠:٠٠ صباحاً"
+EVENT_LOCATION = "مسرح الكلية مبنى ٩ - الكلية التقنية بالأحساء"
 
 INVITEES_FILE = "invitees.json"
 RESPONSES_FILE = "responses.json"
@@ -392,10 +392,12 @@ def get_or_create_template():
 
     # إنشاء قالب جديد
     body_text = (
-        '🎓 *دعوة رسمية*\n\n'
+        '🎤 *دعوة لحضور حوار*\n\n'
         'المكرم *{{1}}* حفظه الله\n'
         'السلام عليكم ورحمة الله وبركاته\n\n'
-        'يسرّنا دعوتكم لحضور *' + EVENT_NAME + '*\n\n'
+        'تنظم الكلية التقنية بالأحساء بالتعاون مع مركز الملك عبدالعزيز للتواصل الحضاري\n'
+        'حواراً بعنوان:\n'
+        '*' + EVENT_NAME + '*\n\n'
         '📅 التاريخ: ' + EVENT_DATE + '\n'
         '🕐 الوقت: ' + EVENT_TIME + '\n'
         '📍 المكان: ' + EVENT_LOCATION + '\n\n'
@@ -459,10 +461,12 @@ def send_single_invitation(to_phone, name, content_sid=None):
 
     # بديل نصي
     body = (
-        f"🎓 *دعوة رسمية*\n\n"
+        f"🎤 *دعوة لحضور حوار*\n\n"
         f"المكرم *{name}* حفظه الله\n"
         f"السلام عليكم ورحمة الله وبركاته\n\n"
-        f"يسرّنا دعوتكم لحضور *{EVENT_NAME}*\n\n"
+        f"تنظم الكلية التقنية بالأحساء بالتعاون مع مركز الملك عبدالعزيز للتواصل الحضاري\n"
+        f"حواراً بعنوان:\n"
+        f"*{EVENT_NAME}*\n\n"
         f"📅 التاريخ: {EVENT_DATE}\n"
         f"🕐 الوقت: {EVENT_TIME}\n"
         f"📍 المكان: {EVENT_LOCATION}\n\n"
@@ -474,8 +478,25 @@ def send_single_invitation(to_phone, name, content_sid=None):
     )
 
     try:
-        msg = client.messages.create(body=body, from_=FROM_PHONE, to=f"whatsapp:+{to_phone}")
-        return True, msg.sid, "text"
+        msg_params = {
+            "body": body,
+            "from_": FROM_PHONE,
+            "to": f"whatsapp:+{to_phone}"
+        }
+
+        # إضافة الصورة إذا كان الرابط متاحاً
+        image_url = ""
+        if os.path.exists(CONFIG_FILE):
+            try:
+                with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                    image_url = json.load(f).get("image_url", "")
+            except Exception:
+                pass
+        if image_url:
+            msg_params["media_url"] = [image_url]
+
+        msg = client.messages.create(**msg_params)
+        return True, msg.sid, "text+image" if image_url else "text"
     except Exception as e:
         return False, str(e), "error"
 
@@ -579,6 +600,20 @@ def serve_invitation():
     if os.path.exists("whatsapp_invitation.html"):
         return send_file("whatsapp_invitation.html")
     return "File not found", 404
+
+
+@app.route("/invitation-image")
+def serve_invitation_image():
+    """تقديم صورة الدعوة (للاستخدام مع Twilio media_url)"""
+    image_path = "invitation_image.png"
+    if os.path.exists(image_path):
+        return send_file(image_path, mimetype="image/png")
+    # محاولة بصيغ أخرى
+    for ext in ["jpg", "jpeg", "webp"]:
+        alt_path = f"invitation_image.{ext}"
+        if os.path.exists(alt_path):
+            return send_file(alt_path, mimetype=f"image/{ext}")
+    return "Image not found", 404
 
 
 # ============================================================

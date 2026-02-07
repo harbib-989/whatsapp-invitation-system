@@ -55,10 +55,25 @@ CONFIG_FILE = "config.json"
 INVITEES_FILE = "invitees.json"
 
 # تفاصيل الفعالية
-EVENT_NAME = "حفل تخريج الدفعة ٢٠٢٦"
-EVENT_DATE = "الأحد ١٥ شعبان ١٤٤٧هـ"
-EVENT_TIME = "٧:٠٠ مساءً"
-EVENT_LOCATION = "قاعة الاحتفالات الرئيسية - الكلية التقنية بالأحساء"
+EVENT_NAME = "حوار: دور الرؤية في تعزيز الهوية الوطنية"
+EVENT_DATE = "الإثنين ٢١ شعبان ١٤٤٧هـ"
+EVENT_TIME = "١٠:٠٠ صباحاً"
+EVENT_LOCATION = "مسرح الكلية مبنى ٩ - الكلية التقنية بالأحساء"
+EVENT_SUBTITLE = "ضمن فعاليات شتاء تقنية الأحساء ٢٠٢٦ - اللقاءات الحوارية"
+EVENT_GUEST = "أ.د. عبدالله بن محمد الفوزان - الأمين العام لمركز الملك عبدالعزيز للتواصل الحضاري"
+
+# رابط صورة الدعوة (يجب أن يكون رابط عام يمكن الوصول إليه)
+# يمكنك رفع الصورة على خدمة مثل Imgur أو أي استضافة صور وإضافة الرابط هنا
+# أو استخدم خيار 8 في القائمة لتعيين الرابط
+# اتركه فارغاً لإرسال الدعوة بدون صورة
+_config_image = ""
+if os.path.exists("config.json"):
+    try:
+        with open("config.json", "r", encoding="utf-8") as _f:
+            _config_image = json.load(_f).get("image_url", "")
+    except Exception:
+        pass
+EVENT_IMAGE_URL = os.environ.get("EVENT_IMAGE_URL", "") or _config_image
 
 DELAY_BETWEEN_MESSAGES = 2
 
@@ -145,16 +160,22 @@ def setup_content_template(client):
     logger.info("  جاري إنشاء قالب الدعوة التفاعلي...")
 
     body_text = (
-        '🎓 *دعوة رسمية*\n'
+        '🎤 *دعوة لحضور حوار*\n'
         '\n'
         'المكرم *{{1}}* حفظه الله\n'
         'السلام عليكم ورحمة الله وبركاته\n'
         '\n'
-        'يسرّنا دعوتكم لحضور *' + EVENT_NAME + '*\n'
+        'تنظم الكلية التقنية بالأحساء بالتعاون مع مركز الملك عبدالعزيز للتواصل الحضاري\n'
+        'حواراً بعنوان:\n'
+        '*' + EVENT_NAME + '*\n'
+        '\n'
+        '🎙️ ضيف الحوار: *' + EVENT_GUEST + '*\n'
         '\n'
         '📅 التاريخ: ' + EVENT_DATE + '\n'
         '🕐 الوقت: ' + EVENT_TIME + '\n'
         '📍 المكان: ' + EVENT_LOCATION + '\n'
+        '\n'
+        '_' + EVENT_SUBTITLE + '_\n'
         '\n'
         'حضوركم يُسعدنا ويُشرّفنا 🌹\n'
         '\n'
@@ -166,22 +187,38 @@ def setup_content_template(client):
         import requests as http_requests
 
         # استخدام Twilio Content API مباشرة (HTTP)
+        # إنشاء أنواع القالب
+        template_types = {
+            "twilio/quick-reply": {
+                "body": body_text,
+                "actions": [
+                    {"title": "✅ تأكيد الحضور", "id": "accept"},
+                    {"title": "❌ اعتذار", "id": "decline"}
+                ]
+            },
+            "twilio/text": {
+                "body": body_text + "\n\nللرد: اكتب تأكيد أو اعتذار"
+            }
+        }
+
+        # إضافة قالب البطاقة مع الصورة إذا كان رابط الصورة متاحاً
+        if EVENT_IMAGE_URL:
+            template_types["twilio/card"] = {
+                "title": "🎓 دعوة رسمية",
+                "subtitle": EVENT_NAME,
+                "body": body_text,
+                "media": [EVENT_IMAGE_URL],
+                "actions": [
+                    {"title": "✅ تأكيد الحضور", "type": "QUICK_REPLY", "id": "accept"},
+                    {"title": "❌ اعتذار", "type": "QUICK_REPLY", "id": "decline"}
+                ]
+            }
+
         template_data = {
             "friendly_name": "graduation_invitation_" + datetime.now().strftime("%Y%m%d%H%M%S"),
             "language": "ar",
             "variables": {"1": "اسم المدعو"},
-            "types": {
-                "twilio/quick-reply": {
-                    "body": body_text,
-                    "actions": [
-                        {"title": "✅ تأكيد الحضور", "id": "accept"},
-                        {"title": "❌ اعتذار", "id": "decline"}
-                    ]
-                },
-                "twilio/text": {
-                    "body": body_text + "\n\nللرد: اكتب تأكيد أو اعتذار"
-                }
-            }
+            "types": template_types
         }
 
         response = http_requests.post(
@@ -237,16 +274,22 @@ def send_invitation(client, to_phone, name, content_sid=None, department=""):
     # البديل: رسالة نصية مع تعليمات الرد
     dept_line = f"({department}) " if department else ""
     body = (
-        f"🎓 *دعوة رسمية*\n"
+        f"🎤 *دعوة لحضور حوار*\n"
         f"\n"
         f"المكرم *{name}* {dept_line}حفظه الله\n"
         f"السلام عليكم ورحمة الله وبركاته\n"
         f"\n"
-        f"يسرّنا دعوتكم لحضور *{EVENT_NAME}*\n"
+        f"تنظم الكلية التقنية بالأحساء بالتعاون مع مركز الملك عبدالعزيز للتواصل الحضاري\n"
+        f"حواراً بعنوان:\n"
+        f"*{EVENT_NAME}*\n"
+        f"\n"
+        f"🎙️ ضيف الحوار: *{EVENT_GUEST}*\n"
         f"\n"
         f"📅 التاريخ: {EVENT_DATE}\n"
         f"🕐 الوقت: {EVENT_TIME}\n"
         f"📍 المكان: {EVENT_LOCATION}\n"
+        f"\n"
+        f"_{EVENT_SUBTITLE}_\n"
         f"\n"
         f"حضوركم يُسعدنا ويُشرّفنا 🌹\n"
         f"\n"
@@ -259,12 +302,19 @@ def send_invitation(client, to_phone, name, content_sid=None, department=""):
     )
 
     try:
-        message = client.messages.create(
-            body=body,
-            from_=FROM_PHONE,
-            to=f"whatsapp:+{to_phone}"
-        )
-        return True, message.sid, "text"
+        msg_params = {
+            "body": body,
+            "from_": FROM_PHONE,
+            "to": f"whatsapp:+{to_phone}"
+        }
+
+        # إضافة الصورة إذا كان الرابط موجوداً
+        if EVENT_IMAGE_URL:
+            msg_params["media_url"] = [EVENT_IMAGE_URL]
+
+        message = client.messages.create(**msg_params)
+        msg_type_label = "text+image" if EVENT_IMAGE_URL else "text"
+        return True, message.sid, msg_type_label
     except TwilioRestException as e:
         return False, str(e), "error"
     except Exception as e:
@@ -450,6 +500,10 @@ def main_menu():
         print("─" * 55)
         print(f"  الفعالية: {EVENT_NAME}")
         print(f"  التاريخ:  {EVENT_DATE} | الوقت: {EVENT_TIME}")
+        if EVENT_IMAGE_URL:
+            print(f"  🖼️  الصورة:  مرفقة ✅")
+        else:
+            print(f"  🖼️  الصورة:  غير مرفقة (بدون صورة)")
         print("─" * 55)
         print()
         print("  1. 📋 عرض قائمة المدعوين")
@@ -459,6 +513,7 @@ def main_menu():
         print("  5. 📤 إرسال جماعي من القائمة المحفوظة")
         print("  6. 🔄 إعادة إنشاء القالب التفاعلي")
         print("  7. 📊 عرض الردود المحفوظة")
+        print("  8. 🖼️  تعيين/تغيير صورة الدعوة")
         print("  0. 🚪 خروج")
         print()
 
@@ -516,6 +571,18 @@ def main_menu():
 
         elif choice == "7":
             show_responses()
+
+        elif choice == "8":
+            EVENT_IMAGE_URL = set_event_image()
+            # إعادة إنشاء القالب إذا كان موجوداً ليشمل الصورة
+            if content_sid:
+                print("\n  ⏳ جاري تحديث القالب التفاعلي ليشمل الصورة...")
+                config = load_config()
+                config.pop("content_sid", None)
+                save_config(config)
+                content_sid = setup_content_template(client)
+                if content_sid:
+                    print(f"  ✅ تم تحديث القالب بالصورة الجديدة")
 
         elif choice == "0":
             print("\n  شكراً لاستخدام النظام! 👋")
@@ -602,6 +669,79 @@ def send_single(client, content_sid):
         print(f"  SID: {result}")
     else:
         print(f"\n  ❌ فشل الإرسال: {result}")
+
+
+def set_event_image():
+    """تعيين أو تغيير صورة الدعوة"""
+    global EVENT_IMAGE_URL
+
+    print(f"\n{'=' * 55}")
+    print("  🖼️  إعداد صورة الدعوة")
+    print(f"{'=' * 55}")
+
+    if EVENT_IMAGE_URL:
+        print(f"\n  الرابط الحالي: {EVENT_IMAGE_URL}")
+
+    print("\n  الصورة المحلية: invitation_image.png", end="")
+    if os.path.exists("invitation_image.png"):
+        print(" ✅ (موجودة)")
+    else:
+        print(" ❌ (غير موجودة)")
+
+    print()
+    print("  اختر طريقة تعيين الصورة:")
+    print("  1. إدخال رابط صورة عام (URL)")
+    print("  2. استخدام الصورة المحلية عبر خادم الويب (webhook_server)")
+    print("     (يجب أن يكون خادم الويب يعمل مع ngrok)")
+    print("  3. إزالة الصورة (إرسال بدون صورة)")
+    print("  0. رجوع")
+    print()
+
+    sub_choice = input("  اختر: ").strip()
+
+    if sub_choice == "1":
+        url = input("\n  أدخل رابط الصورة (https://...): ").strip()
+        if url and (url.startswith("http://") or url.startswith("https://")):
+            EVENT_IMAGE_URL = url
+            # حفظ في config.json
+            config = load_config()
+            config["image_url"] = url
+            save_config(config)
+            print(f"\n  ✅ تم تعيين الصورة: {url}")
+            return url
+        else:
+            print("\n  ❌ رابط غير صالح!")
+            return EVENT_IMAGE_URL
+
+    elif sub_choice == "2":
+        if not os.path.exists("invitation_image.png"):
+            print("\n  ❌ ملف invitation_image.png غير موجود!")
+            print("  ضع صورة الدعوة في مجلد المشروع باسم invitation_image.png")
+            return EVENT_IMAGE_URL
+
+        ngrok_url = input("\n  أدخل رابط ngrok (مثل https://xxxx.ngrok-free.app): ").strip()
+        if ngrok_url:
+            image_url = f"{ngrok_url.rstrip('/')}/invitation-image"
+            EVENT_IMAGE_URL = image_url
+            config = load_config()
+            config["image_url"] = image_url
+            save_config(config)
+            print(f"\n  ✅ تم تعيين الصورة: {image_url}")
+            print("  💡 تأكد من تشغيل webhook_server.py مع ngrok")
+            return image_url
+        else:
+            print("\n  ❌ لم يتم إدخال رابط!")
+            return EVENT_IMAGE_URL
+
+    elif sub_choice == "3":
+        EVENT_IMAGE_URL = ""
+        config = load_config()
+        config.pop("image_url", None)
+        save_config(config)
+        print("\n  ✅ تمت إزالة الصورة - ستُرسل الدعوات بدون صورة")
+        return ""
+
+    return EVENT_IMAGE_URL
 
 
 def show_responses():
