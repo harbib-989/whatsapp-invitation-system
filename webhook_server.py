@@ -469,8 +469,9 @@ def send_single_invitation(to_phone, name, content_sid=None):
     """إرسال دعوة واحدة"""
     client = Client(ACCOUNT_SID, AUTH_TOKEN)
 
-    # رابط صورة الدعوة
-    image_url = f"{get_base_url()}/media/invitation.png"
+    # رابط صورة الدعوة (يتفعل بعد تحقق النشاط التجاري)
+    # image_url = "https://i.imgur.com/UmkR27D.jpeg"
+    image_url = None  # معطّل مؤقتاً لحد ما يتم التحقق
 
     # محاولة بالأزرار التفاعلية أولاً (إذا القالب معتمد)
     if content_sid:
@@ -481,21 +482,22 @@ def send_single_invitation(to_phone, name, content_sid=None):
                 from_=FROM_PHONE,
                 to=f"whatsapp:+{to_phone}"
             )
-            # إرسال الصورة كرسالة منفصلة بعد الأزرار
-            try:
-                client.messages.create(
-                    body="",
-                    media_url=[image_url],
-                    from_=FROM_PHONE,
-                    to=f"whatsapp:+{to_phone}"
-                )
-            except Exception:
-                pass
-            return True, msg.sid, "buttons+image"
+            # إرسال الصورة كرسالة منفصلة بعد الأزرار (إذا متاحة)
+            if image_url:
+                try:
+                    client.messages.create(
+                        body="",
+                        media_url=[image_url],
+                        from_=FROM_PHONE,
+                        to=f"whatsapp:+{to_phone}"
+                    )
+                except Exception:
+                    pass
+            return True, msg.sid, "buttons"
         except Exception:
             pass
 
-    # بديل: إرسال نص + صورة
+    # بديل: إرسال نص (+ صورة إذا متاحة)
     body = (
         f"دعوة رسمية\n\n"
         f"المكرم {name} حفظه الله\n"
@@ -513,13 +515,16 @@ def send_single_invitation(to_phone, name, content_sid=None):
     )
 
     try:
-        msg = client.messages.create(
-            body=body,
-            media_url=[image_url],
-            from_=FROM_PHONE,
-            to=f"whatsapp:+{to_phone}"
-        )
-        return True, msg.sid, "text+image"
+        msg_params = {
+            "body": body,
+            "from_": FROM_PHONE,
+            "to": f"whatsapp:+{to_phone}"
+        }
+        if image_url:
+            msg_params["media_url"] = [image_url]
+
+        msg = client.messages.create(**msg_params)
+        return True, msg.sid, "text+image" if image_url else "text"
     except Exception as e:
         return False, str(e), "error"
 
