@@ -469,8 +469,8 @@ def send_single_invitation(to_phone, name, content_sid=None):
     """إرسال دعوة واحدة"""
     client = Client(ACCOUNT_SID, AUTH_TOKEN)
 
-    # رابط صورة الدعوة
-    image_url = f"{get_base_url()}/static/invitation.png"
+    # رابط صورة الدعوة (GitHub raw URL للسرعة)
+    image_url = "https://raw.githubusercontent.com/harbib-989/whatsapp-invitation-system/main/static/invitation.png"
 
     # محاولة بالأزرار التفاعلية أولاً (إذا القالب معتمد)
     if content_sid:
