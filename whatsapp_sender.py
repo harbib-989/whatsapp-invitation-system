@@ -48,7 +48,7 @@ except ImportError:
 
 ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID", "")
 AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "")
-FROM_PHONE = os.environ.get("TWILIO_FROM_PHONE", "whatsapp:+14155238886")
+FROM_PHONE = os.environ.get("TWILIO_FROM_PHONE", "whatsapp:+966550308539")
 
 CSV_FILE = "recipients.csv"
 CONFIG_FILE = "config.json"

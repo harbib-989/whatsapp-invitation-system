@@ -58,7 +58,7 @@ except ImportError:
 
 ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID", "")
 AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "")
-FROM_PHONE = os.environ.get("TWILIO_FROM_PHONE", "whatsapp:+14155238886")
+FROM_PHONE = os.environ.get("TWILIO_FROM_PHONE", "whatsapp:+966550308539")
 
 EVENT_NAME = "حوار: دور الرؤية في تعزيز الهوية الوطنية"
 EVENT_DATE = "الإثنين ٢١ شعبان ١٤٤٧هـ"
