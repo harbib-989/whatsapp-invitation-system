@@ -256,10 +256,11 @@ def setup_content_template(client):
 # ============================================================
 
 def send_invitation(client, to_phone, name, content_sid=None, department=""):
-    """إرسال دعوة تفاعلية مع أزرار، أو رسالة نصية كبديل"""
+    """إرسال دعوة تفاعلية مع أزرار، أو رسالة نصية + صورة كبديل"""
 
-    # المحاولة الأولى: إرسال برسالة تفاعلية بأزرار
-    if content_sid:
+    # إذا لا توجد صورة → محاولة بالأزرار التفاعلية أولاً
+    # (لا يمكن الجمع بين content_sid و media_url في Twilio)
+    if content_sid and not EVENT_IMAGE_URL:
         try:
             message = client.messages.create(
                 content_sid=content_sid,

@@ -442,12 +442,26 @@ def get_or_create_template():
     return None
 
 
+def get_image_url():
+    """جلب رابط صورة الدعوة من ملف الإعدادات"""
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                return json.load(f).get("image_url", "")
+        except Exception:
+            pass
+    return ""
+
+
 def send_single_invitation(to_phone, name, content_sid=None):
     """إرسال دعوة واحدة"""
     client = Client(ACCOUNT_SID, AUTH_TOKEN)
 
-    # محاولة بالأزرار
-    if content_sid:
+    # التحقق من وجود صورة
+    image_url = get_image_url()
+
+    # إذا لا توجد صورة → محاولة بالأزرار التفاعلية أولاً
+    if content_sid and not image_url:
         try:
             msg = client.messages.create(
                 content_sid=content_sid,
@@ -459,7 +473,7 @@ def send_single_invitation(to_phone, name, content_sid=None):
         except Exception:
             pass
 
-    # بديل نصي
+    # إرسال نص + صورة (أو نص فقط إذا لا توجد صورة)
     body = (
         f"🎤 *دعوة لحضور حوار*\n\n"
         f"المكرم *{name}* حفظه الله\n"
@@ -485,13 +499,6 @@ def send_single_invitation(to_phone, name, content_sid=None):
         }
 
         # إضافة الصورة إذا كان الرابط متاحاً
-        image_url = ""
-        if os.path.exists(CONFIG_FILE):
-            try:
-                with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-                    image_url = json.load(f).get("image_url", "")
-            except Exception:
-                pass
         if image_url:
             msg_params["media_url"] = [image_url]
 
