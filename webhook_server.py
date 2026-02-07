@@ -390,36 +390,34 @@ def get_or_create_template():
         if config.get("content_sid"):
             return config["content_sid"]
 
-    # إنشاء قالب جديد
+    # إنشاء قالب جديد (بدون إيموجي في الأزرار - شرط WhatsApp Business API)
     body_text = (
-        '🎤 *دعوة لحضور حوار*\n\n'
-        'المكرم *{{1}}* حفظه الله\n'
+        'دعوة رسمية\n\n'
+        'المكرم {{1}} حفظه الله\n'
         'السلام عليكم ورحمة الله وبركاته\n\n'
-        'تنظم الكلية التقنية بالأحساء بالتعاون مع مركز الملك عبدالعزيز للتواصل الحضاري\n'
-        'حواراً بعنوان:\n'
-        '*' + EVENT_NAME + '*\n\n'
-        '📅 التاريخ: ' + EVENT_DATE + '\n'
-        '🕐 الوقت: ' + EVENT_TIME + '\n'
-        '📍 المكان: ' + EVENT_LOCATION + '\n\n'
-        'حضوركم يُسعدنا ويُشرّفنا 🌹\n\n'
-        '_الكلية التقنية بالأحساء_\n'
-        '_المؤسسة العامة للتدريب التقني والمهني_'
+        'يسرنا دعوتكم لحضور ' + EVENT_NAME + '\n\n'
+        'التاريخ: ' + EVENT_DATE + '\n'
+        'الوقت: ' + EVENT_TIME + '\n'
+        'المكان: ' + EVENT_LOCATION + '\n\n'
+        'حضوركم يسعدنا ويشرفنا\n\n'
+        'الكلية التقنية بالاحساء\n'
+        'المؤسسة العامة للتدريب التقني والمهني'
     )
 
     template_data = {
-        "friendly_name": "dashboard_invite_" + datetime.now().strftime("%Y%m%d%H%M%S"),
+        "friendly_name": "invite_" + datetime.now().strftime("%Y%m%d%H%M%S"),
         "language": "ar",
-        "variables": {"1": "اسم المدعو"},
+        "variables": {"1": "Guest"},
         "types": {
             "twilio/quick-reply": {
                 "body": body_text,
                 "actions": [
-                    {"title": "✅ تأكيد الحضور", "id": "accept"},
-                    {"title": "❌ اعتذار", "id": "decline"}
+                    {"title": "تاكيد الحضور", "id": "accept"},
+                    {"title": "اعتذار", "id": "decline"}
                 ]
             },
             "twilio/text": {
-                "body": body_text + "\n\nللرد: اكتب تأكيد أو اعتذار"
+                "body": body_text + "\n\nللرد اكتب تاكيد او اعتذار"
             }
         }
     }
@@ -427,12 +425,17 @@ def get_or_create_template():
     try:
         resp = http_requests.post(
             "https://content.twilio.com/v1/Content",
-            data=json.dumps(template_data),
-            headers={"Content-Type": "application/json"},
+            json=template_data,
             auth=(ACCOUNT_SID, AUTH_TOKEN)
         )
         if resp.status_code == 201:
             sid = resp.json().get("sid")
+            # طلب الاعتماد من WhatsApp
+            http_requests.post(
+                f"https://content.twilio.com/v1/Content/{sid}/ApprovalRequests/whatsapp",
+                json={"name": "invite_" + datetime.now().strftime("%Y%m%d%H%M%S"), "category": "UTILITY"},
+                auth=(ACCOUNT_SID, AUTH_TOKEN)
+            )
             config = {"content_sid": sid}
             with open(CONFIG_FILE, "w", encoding="utf-8") as f:
                 json.dump(config, f, ensure_ascii=False, indent=2)
