@@ -87,7 +87,7 @@ logger = logging.getLogger(__name__)
 # Flask Application
 # ============================================================
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="static", static_url_path="/static")
 
 # ============================================================
 # دوال البيانات
@@ -456,15 +456,24 @@ def get_image_url():
     return ""
 
 
+def get_base_url():
+    """جلب رابط السيرفر الأساسي"""
+    # على Render
+    render_url = os.environ.get("RENDER_EXTERNAL_URL", "")
+    if render_url:
+        return render_url
+    return "https://whatsapp-invitation-system.onrender.com"
+
+
 def send_single_invitation(to_phone, name, content_sid=None):
     """إرسال دعوة واحدة"""
     client = Client(ACCOUNT_SID, AUTH_TOKEN)
 
-    # التحقق من وجود صورة
-    image_url = get_image_url()
+    # رابط صورة الدعوة
+    image_url = f"{get_base_url()}/static/invitation.png"
 
-    # إذا لا توجد صورة → محاولة بالأزرار التفاعلية أولاً
-    if content_sid and not image_url:
+    # محاولة بالأزرار التفاعلية أولاً (إذا القالب معتمد)
+    if content_sid:
         try:
             msg = client.messages.create(
                 content_sid=content_sid,
@@ -472,41 +481,45 @@ def send_single_invitation(to_phone, name, content_sid=None):
                 from_=FROM_PHONE,
                 to=f"whatsapp:+{to_phone}"
             )
-            return True, msg.sid, "buttons"
+            # إرسال الصورة كرسالة منفصلة بعد الأزرار
+            try:
+                client.messages.create(
+                    body="",
+                    media_url=[image_url],
+                    from_=FROM_PHONE,
+                    to=f"whatsapp:+{to_phone}"
+                )
+            except Exception:
+                pass
+            return True, msg.sid, "buttons+image"
         except Exception:
             pass
 
-    # إرسال نص + صورة (أو نص فقط إذا لا توجد صورة)
+    # بديل: إرسال نص + صورة
     body = (
-        f"🎤 *دعوة لحضور حوار*\n\n"
-        f"المكرم *{name}* حفظه الله\n"
+        f"دعوة رسمية\n\n"
+        f"المكرم {name} حفظه الله\n"
         f"السلام عليكم ورحمة الله وبركاته\n\n"
-        f"تنظم الكلية التقنية بالأحساء بالتعاون مع مركز الملك عبدالعزيز للتواصل الحضاري\n"
-        f"حواراً بعنوان:\n"
-        f"*{EVENT_NAME}*\n\n"
-        f"📅 التاريخ: {EVENT_DATE}\n"
-        f"🕐 الوقت: {EVENT_TIME}\n"
-        f"📍 المكان: {EVENT_LOCATION}\n\n"
-        f"حضوركم يُسعدنا ويُشرّفنا 🌹\n\n"
-        f"─────────────────\n"
-        f"📩 *للرد على الدعوة:*\n"
-        f"اكتب *تأكيد* أو *1* ← للحضور ✅\n"
-        f"اكتب *اعتذار* أو *2* ← للاعتذار ❌"
+        f"تنظم الكلية التقنية بالاحساء بالتعاون مع مركز الملك عبدالعزيز للتواصل الحضاري\n"
+        f"حوارا بعنوان:\n"
+        f"{EVENT_NAME}\n\n"
+        f"التاريخ: {EVENT_DATE}\n"
+        f"الوقت: {EVENT_TIME}\n"
+        f"المكان: {EVENT_LOCATION}\n\n"
+        f"حضوركم يسعدنا ويشرفنا\n\n"
+        f"للرد على الدعوة:\n"
+        f"اكتب تاكيد او 1 للحضور\n"
+        f"اكتب اعتذار او 2 للاعتذار"
     )
 
     try:
-        msg_params = {
-            "body": body,
-            "from_": FROM_PHONE,
-            "to": f"whatsapp:+{to_phone}"
-        }
-
-        # إضافة الصورة إذا كان الرابط متاحاً
-        if image_url:
-            msg_params["media_url"] = [image_url]
-
-        msg = client.messages.create(**msg_params)
-        return True, msg.sid, "text+image" if image_url else "text"
+        msg = client.messages.create(
+            body=body,
+            media_url=[image_url],
+            from_=FROM_PHONE,
+            to=f"whatsapp:+{to_phone}"
+        )
+        return True, msg.sid, "text+image"
     except Exception as e:
         return False, str(e), "error"
 
