@@ -640,16 +640,11 @@ def serve_invitation_image():
 
 
 @app.route("/invitation-image")
-def serve_invitation_image():
-    """تقديم صورة الدعوة (للاستخدام مع Twilio media_url)"""
-    image_path = "invitation_image.png"
-    if os.path.exists(image_path):
-        return send_file(image_path, mimetype="image/png")
-    # محاولة بصيغ أخرى
-    for ext in ["jpg", "jpeg", "webp"]:
-        alt_path = f"invitation_image.{ext}"
-        if os.path.exists(alt_path):
-            return send_file(alt_path, mimetype=f"image/{ext}")
+def serve_invitation_image_alt():
+    """تقديم صورة الدعوة (رابط بديل)"""
+    img_path = os.path.join("static", "invitation.png")
+    if os.path.exists(img_path):
+        return send_file(img_path, mimetype="image/png")
     return "Image not found", 404
 
 
