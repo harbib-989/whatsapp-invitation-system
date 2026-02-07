@@ -469,8 +469,8 @@ def send_single_invitation(to_phone, name, content_sid=None):
     """إرسال دعوة واحدة"""
     client = Client(ACCOUNT_SID, AUTH_TOKEN)
 
-    # رابط صورة الدعوة (GitHub raw URL للسرعة)
-    image_url = "https://raw.githubusercontent.com/harbib-989/whatsapp-invitation-system/main/static/invitation.png"
+    # رابط صورة الدعوة
+    image_url = f"{get_base_url()}/media/invitation.png"
 
     # محاولة بالأزرار التفاعلية أولاً (إذا القالب معتمد)
     if content_sid:
@@ -623,6 +623,15 @@ def serve_invitation():
     if os.path.exists("whatsapp_invitation.html"):
         return send_file("whatsapp_invitation.html")
     return "File not found", 404
+
+
+@app.route("/media/invitation.png")
+def serve_invitation_image():
+    """خدمة صورة الدعوة مع Content-Type صحيح"""
+    img_path = os.path.join("static", "invitation.png")
+    if os.path.exists(img_path):
+        return send_file(img_path, mimetype="image/png")
+    return "Image not found", 404
 
 
 @app.route("/invitation-image")
