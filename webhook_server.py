@@ -60,10 +60,14 @@ ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID", "")
 AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "")
 FROM_PHONE = os.environ.get("TWILIO_FROM_PHONE", "whatsapp:+966550308539")
 
-EVENT_NAME = "حوار: دور الرؤية في تعزيز الهوية الوطنية"
-EVENT_DATE = "الإثنين ٢١ شعبان ١٤٤٧هـ"
-EVENT_TIME = "١٠:٠٠ صباحاً"
-EVENT_LOCATION = "مسرح الكلية مبنى ٩ - الكلية التقنية بالأحساء"
+# WhatsApp Content Template SID لملتقى الكفاءات التقنية
+JOB_FAIR_CONTENT_SID = "HX7f91572f7f87564aa0265dbe20b6ae12"
+
+# معلومات الفعالية
+EVENT_NAME = "ملتقى الكفاءات التقنية"
+EVENT_DATE = "يوم الأحد 15"
+EVENT_DURATION = "يومان متتاليان"
+EVENT_LOCATION = "مسرح الكلية التقنية - الكلية التقنية بالأحساء"
 
 INVITEES_FILE = "invitees.json"
 RESPONSES_FILE = "responses.json"
@@ -482,31 +486,33 @@ def send_single_invitation(to_phone, name, content_sid=None):
     """إرسال دعوة واحدة مع أزرار تفاعلية"""
     client = Client(ACCOUNT_SID, AUTH_TOKEN)
 
-    # رابط صورة الدعوة
-    image_url = "https://raw.githubusercontent.com/harbib-989/whatsapp-invitation-system/main/job_fair_image.png"
+    # استخدام Content SID لملتقى الكفاءات التقنية
+    if not content_sid:
+        content_sid = JOB_FAIR_CONTENT_SID
 
-    # محاولة 1: إرسال Content Template بأزرار (إذا معتمد من WhatsApp)
-    if content_sid:
-        try:
-            msg = client.messages.create(
-                content_sid=content_sid,
-                content_variables=json.dumps({"1": name}),
-                from_=FROM_PHONE,
-                to=f"whatsapp:+{to_phone}"
-            )
-            logger.info(f"✅ تم إرسال دعوة بأزرار WhatsApp إلى {name}")
-            return True, msg.sid, "whatsapp_buttons"
-        except Exception as e:
-            logger.warning(f"⚠️ فشل إرسال Content Template: {e}")
+    # محاولة 1: إرسال WhatsApp Card بأزرار (إذا معتمد من WhatsApp)
+    try:
+        msg = client.messages.create(
+            content_sid=content_sid,
+            content_variables=json.dumps({"1": name}),
+            from_=FROM_PHONE,
+            to=f"whatsapp:+{to_phone}"
+        )
+        logger.info(f"✅ تم إرسال دعوة بأزرار WhatsApp Card إلى {name}")
+        return True, msg.sid, "whatsapp_card"
+    except Exception as e:
+        logger.warning(f"⚠️ فشل إرسال WhatsApp Card (قد يكون غير معتمد بعد): {e}")
     
-    # محاولة 2: إرسال رسالة نصية مع تعليمات للرد
+    # محاولة 2: Fallback - إرسال رسالة نصية مع صورة
+    image_url = "https://raw.githubusercontent.com/harbib-989/whatsapp-invitation-system/main/job_fair_image.png"
+    
     body = (
         f"💼 *ملتقى الكفاءات التقنية*\n\n"
         f"عزيزي *{name}*، السلام عليكم ورحمة الله 🌹\n\n"
         f"يسرنا دعوتك لحضور ملتقى التوظيف:\n\n"
-        f"📅 التاريخ: يوم الأحد 15\n"
-        f"⏰ المدة: يومان متتاليان\n"
-        f"📍 الموقع: مسرح الكلية التقنية\n\n"
+        f"📅 التاريخ: {EVENT_DATE}\n"
+        f"⏰ المدة: {EVENT_DURATION}\n"
+        f"📍 الموقع: {EVENT_LOCATION}\n\n"
         f"🎯 فرصة للقاء الشركات الرائدة والحصول على وظيفة مميزة!\n\n"
         f"━━━━━━━━━━━━━━━━━━\n"
         f"🔹 للرد على الدعوة:\n"
