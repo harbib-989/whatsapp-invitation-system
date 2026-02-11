@@ -648,6 +648,98 @@ def serve_invitation_image_alt():
     return "Image not found", 404
 
 
+@app.route("/decline_form.html")
+def serve_decline_form():
+    """عرض صفحة الاعتذار"""
+    if os.path.exists("decline_form.html"):
+        return send_file("decline_form.html")
+    return "File not found", 404
+
+
+@app.route("/job_fair_invitation.html")
+def serve_job_fair_invitation():
+    """عرض صفحة دعوة ملتقى التوظيف"""
+    if os.path.exists("job_fair_invitation.html"):
+        return send_file("job_fair_invitation.html")
+    return "File not found", 404
+
+
+@app.route("/webhook/decline", methods=["POST"])
+def webhook_decline():
+    """معالجة نموذج الاعتذار عن الحضور"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "error": "بيانات غير صالحة"}), 400
+        
+        name = data.get("name", "").strip()
+        phone = data.get("phone", "").strip()
+        reason = data.get("reason", "").strip()
+        details = data.get("details", "").strip()
+        future_events = data.get("futureEvents", False)
+        
+        if not name or not phone:
+            return jsonify({"success": False, "error": "الاسم والرقم مطلوبان"}), 400
+        
+        # تنسيق رقم الهاتف
+        formatted_phone = format_saudi_phone(phone)
+        if not formatted_phone:
+            return jsonify({"success": False, "error": "رقم الهاتف غير صحيح"}), 400
+        
+        # حفظ الاعتذار
+        responses = load_responses()
+        
+        decline_data = {
+            "name": name,
+            "phone": formatted_phone,
+            "status": "decline",
+            "reason": reason,
+            "details": details,
+            "future_events": future_events,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "source": "web_form"
+        }
+        
+        # تحديث أو إضافة الرد
+        existing_idx = next((i for i, r in enumerate(responses) if r.get("phone") == formatted_phone), None)
+        if existing_idx is not None:
+            responses[existing_idx] = decline_data
+        else:
+            responses.append(decline_data)
+        
+        save_responses(responses)
+        
+        logger.info(f"❌ اعتذار جديد من {name} ({formatted_phone}) - السبب: {reason}")
+        
+        # إرسال رسالة شكر عبر واتساب (اختياري)
+        try:
+            if ACCOUNT_SID and AUTH_TOKEN:
+                client = Client(ACCOUNT_SID, AUTH_TOKEN)
+                thank_you_msg = (
+                    f"شكراً {name}،\n\n"
+                    f"تم استلام اعتذارك عن حضور ملتقى الكفاءات التقنية.\n"
+                    f"نتمنى لك كل التوفيق ونأمل رؤيتك في الفعاليات القادمة.\n\n"
+                    f"الكلية التقنية بالأحساء"
+                )
+                client.messages.create(
+                    body=thank_you_msg,
+                    from_=FROM_PHONE,
+                    to=f"whatsapp:+{formatted_phone}"
+                )
+                logger.info(f"✅ تم إرسال رسالة شكر إلى {name}")
+        except Exception as e:
+            logger.warning(f"فشل إرسال رسالة الشكر: {e}")
+        
+        return jsonify({
+            "success": True,
+            "message": "تم إرسال اعتذارك بنجاح"
+        })
+    
+    except Exception as e:
+        logger.error(f"خطأ في معالجة الاعتذار: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 # ============================================================
 # تشغيل ngrok تلقائياً
 # ============================================================

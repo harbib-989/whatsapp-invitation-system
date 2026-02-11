@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اعتذار عن الحضور</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: #fff;
+            border-radius: 24px;
+            max-width: 500px;
+            width: 100%;
+            padding: 40px 30px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            animation: slideUp 0.8s ease;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        h1 {
+            color: #333;
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 15px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 30px;
+            line-height: 1.7;
+        }
+
+        form {
+            text-align: right;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e0e7ff;
+            border-radius: 12px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 15px;
+            transition: border-color 0.3s;
+            background: #f8f9ff;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: #fff;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .required {
+            color: #e74c3c;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-submit:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .success-message {
+            display: none;
+            padding: 20px;
+            background: #d4edda;
+            border: 2px solid #c3e6cb;
+            border-radius: 12px;
+            color: #155724;
+            margin-top: 20px;
+            font-weight: 600;
+        }
+
+        .error-message {
+            display: none;
+            padding: 20px;
+            background: #f8d7da;
+            border: 2px solid #f5c6cb;
+            border-radius: 12px;
+            color: #721c24;
+            margin-top: 20px;
+            font-weight: 600;
+        }
+
+        @media (max-width: 550px) {
+            .container { padding: 30px 20px; }
+            h1 { font-size: 24px; }
+            .icon { font-size: 60px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">😔</div>
+        <h1>اعتذار عن الحضور</h1>
+        <p class="subtitle">نأسف لعدم تمكنك من الحضور. نود معرفة السبب لخدمتك بشكل أفضل في الفعاليات القادمة</p>
+
+        <form id="declineForm">
+            <div class="form-group">
+                <label for="name">الاسم الكامل <span class="required">*</span></label>
+                <input type="text" id="name" name="name" required placeholder="أدخل اسمك الكامل">
+            </div>
+
+            <div class="form-group">
+                <label for="phone">رقم الجوال <span class="required">*</span></label>
+                <input type="tel" id="phone" name="phone" required placeholder="05xxxxxxxx" pattern="[0-9]{10}">
+            </div>
+
+            <div class="form-group">
+                <label for="reason">سبب الاعتذار <span class="required">*</span></label>
+                <select id="reason" name="reason" required>
+                    <option value="">اختر السبب</option>
+                    <option value="schedule_conflict">تعارض في المواعيد</option>
+                    <option value="health_reasons">ظروف صحية</option>
+                    <option value="work_commitment">ارتباط عمل</option>
+                    <option value="travel">سفر</option>
+                    <option value="personal">ظروف شخصية</option>
+                    <option value="other">سبب آخر</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="details">تفاصيل إضافية (اختياري)</label>
+                <textarea id="details" name="details" placeholder="يمكنك إضافة تفاصيل إضافية هنا..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" name="futureEvents" style="width: auto; display: inline-block; margin-left: 8px;">
+                    أرغب في استلام دعوات للفعاليات القادمة
+                </label>
+            </div>
+
+            <button type="submit" class="btn-submit">إرسال الاعتذار</button>
+
+            <div class="success-message" id="successMessage">
+                ✅ تم إرسال اعتذارك بنجاح. نتمنى لك كل التوفيق ونأمل رؤيتك في الفعاليات القادمة!
+            </div>
+
+            <div class="error-message" id="errorMessage">
+                ❌ حدث خطأ أثناء الإرسال. يرجى المحاولة مرة أخرى.
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('declineForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = this.querySelector('.btn-submit');
+            const successMsg = document.getElementById('successMessage');
+            const errorMsg = document.getElementById('errorMessage');
+            
+            // Reset messages
+            successMsg.style.display = 'none';
+            errorMsg.style.display = 'none';
+            
+            // Disable button
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'جاري الإرسال...';
+            
+            // Collect form data
+            const formData = {
+                name: document.getElementById('name').value,
+                phone: document.getElementById('phone').value,
+                reason: document.getElementById('reason').value,
+                details: document.getElementById('details').value,
+                futureEvents: document.querySelector('input[name="futureEvents"]').checked,
+                type: 'decline',
+                timestamp: new Date().toISOString()
+            };
+            
+            try {
+                // Send to webhook
+                const response = await fetch('/webhook/decline', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (response.ok) {
+                    successMsg.style.display = 'block';
+                    this.reset();
+                    
+                    // Redirect after 3 seconds
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 3000);
+                } else {
+                    throw new Error('Server error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                errorMsg.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'إرسال الاعتذار';
+            }
+        });
+    </script>
+</body>
+</html>
