@@ -150,8 +150,15 @@ DECLINE_KEYWORDS = [
 
 
 def classify_response(text):
-    """تصنيف رد المدعو"""
+    """تصنيف رد المدعو - يدعم النصوص والأزرار"""
     text = text.strip().lower()
+    
+    # دعم Button IDs من Quick Reply
+    if text in ["confirm_attendance", "confirm", "accept_button"]:
+        return "accept"
+    if text in ["decline_attendance", "decline", "decline_button"]:
+        return "decline"
+    
     # إزالة الإيموجي للمقارنة
     clean = text.replace("✅", "").replace("❌", "").strip()
 
