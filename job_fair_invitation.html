@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دعوة لملتقى الكفاءات التقنية</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 40%, #7e22ce 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated background particles */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 50%;
+            animation: float 15s infinite ease-in-out;
+        }
+
+        .particle:nth-child(1) { width: 60px; height: 60px; left: 5%; top: 20%; animation-duration: 12s; animation-delay: 0s; }
+        .particle:nth-child(2) { width: 40px; height: 40px; left: 20%; top: 60%; animation-duration: 16s; animation-delay: 2s; }
+        .particle:nth-child(3) { width: 70px; height: 70px; left: 40%; top: 30%; animation-duration: 14s; animation-delay: 4s; }
+        .particle:nth-child(4) { width: 50px; height: 50px; left: 60%; top: 70%; animation-duration: 18s; animation-delay: 1s; }
+        .particle:nth-child(5) { width: 45px; height: 45px; left: 80%; top: 40%; animation-duration: 13s; animation-delay: 3s; }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); opacity: 0.3; }
+            25% { transform: translate(20px, -30px) rotate(90deg); opacity: 0.5; }
+            50% { transform: translate(-20px, -60px) rotate(180deg); opacity: 0.3; }
+            75% { transform: translate(40px, -30px) rotate(270deg); opacity: 0.5; }
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 28px;
+            max-width: 520px;
+            width: 100%;
+            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+            animation: slideUp 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(70px) scale(0.94); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            padding: 35px 30px 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 6s infinite linear;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .icon-container {
+            width: 75px;
+            height: 75px;
+            background: linear-gradient(135deg, #7e22ce, #a855f7);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 18px;
+            box-shadow: 0 6px 20px rgba(126, 34, 206, 0.5);
+            animation: pulse 2.5s infinite;
+            font-size: 36px;
+            position: relative;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 6px 20px rgba(126, 34, 206, 0.5); transform: scale(1); }
+            50% { box-shadow: 0 6px 35px rgba(126, 34, 206, 0.8); transform: scale(1.05); }
+        }
+
+        .card-header h1 {
+            color: #fff;
+            font-size: 26px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            position: relative;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .card-header .subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+            font-weight: 500;
+            position: relative;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.25);
+            color: #fff;
+            padding: 6px 18px;
+            border-radius: 24px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 12px;
+            position: relative;
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .card-body {
+            padding: 35px 30px;
+        }
+
+        /* Hero Image Section */
+        .hero-image {
+            text-align: center;
+            margin-bottom: 30px;
+            animation: fadeIn 0.9s ease 0.3s both;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+            background: linear-gradient(135deg, #f0f4ff, #e0e7ff);
+            position: relative;
+        }
+
+        .hero-image img {
+            width: 100%;
+            max-width: 100%;
+            display: block;
+            border-radius: 18px;
+        }
+
+        /* Placeholder for image if not loaded */
+        .hero-image-placeholder {
+            width: 100%;
+            height: 280px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: #fff;
+            border-radius: 18px;
+            padding: 30px;
+        }
+
+        .hero-image-placeholder .icon {
+            font-size: 72px;
+            margin-bottom: 15px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        .hero-image-placeholder h3 {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .hero-image-placeholder p {
+            font-size: 18px;
+            font-weight: 500;
+            opacity: 0.95;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .event-title {
+            text-align: center;
+            margin-bottom: 28px;
+            animation: fadeIn 1s ease 0.4s both;
+        }
+
+        .event-title h2 {
+            color: #1e3c72;
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .event-title p {
+            color: #666;
+            font-size: 16px;
+            line-height: 1.8;
+            font-weight: 400;
+        }
+
+        .divider {
+            height: 3px;
+            background: linear-gradient(to left, transparent, #7e22ce, transparent);
+            margin: 25px 0;
+            animation: fadeIn 1s ease 0.6s both;
+        }
+
+        .details {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            margin-bottom: 30px;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 18px;
+            background: linear-gradient(135deg, #f8f9ff, #f0f4ff);
+            border-radius: 16px;
+            transition: transform 0.25s, box-shadow 0.25s;
+            animation: fadeIn 0.7s ease both;
+            border: 1px solid #e0e7ff;
+        }
+
+        .detail-item:nth-child(1) { animation-delay: 0.5s; }
+        .detail-item:nth-child(2) { animation-delay: 0.6s; }
+        .detail-item:nth-child(3) { animation-delay: 0.7s; }
+        .detail-item:nth-child(4) { animation-delay: 0.8s; }
+
+        .detail-item:hover {
+            transform: translateX(-6px);
+            box-shadow: 0 6px 18px rgba(30, 60, 114, 0.15);
+        }
+
+        .detail-icon {
+            width: 50px;
+            height: 50px;
+            background: #fff;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            flex-shrink: 0;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+
+        .detail-text {
+            flex: 1;
+        }
+
+        .detail-text .label {
+            color: #999;
+            font-size: 13px;
+            margin-bottom: 3px;
+            font-weight: 500;
+        }
+
+        .detail-text .value {
+            color: #1e3c72;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .message-box {
+            background: linear-gradient(135deg, #dfe9ff, #f0f4ff);
+            border-radius: 0 16px 16px 16px;
+            padding: 18px 20px;
+            margin-bottom: 30px;
+            position: relative;
+            animation: fadeIn 0.9s ease 0.9s both;
+            border-right: 4px solid #7e22ce;
+        }
+
+        .message-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: -9px;
+            width: 0;
+            height: 0;
+            border-top: 0 solid transparent;
+            border-bottom: 14px solid transparent;
+            border-left: 14px solid #dfe9ff;
+        }
+
+        .message-box p {
+            color: #1e3c72;
+            font-size: 15px;
+            line-height: 1.9;
+            font-weight: 500;
+        }
+
+        .message-box .highlight {
+            color: #7e22ce;
+            font-weight: 700;
+        }
+
+        .buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            animation: fadeIn 0.9s ease 1s both;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 18px 28px;
+            border: none;
+            border-radius: 16px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn-register {
+            background: linear-gradient(135deg, #7e22ce, #a855f7);
+            color: #fff;
+            box-shadow: 0 6px 20px rgba(126, 34, 206, 0.4);
+        }
+
+        .btn-register:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(126, 34, 206, 0.6);
+        }
+
+        .btn-register:active {
+            transform: translateY(-1px);
+        }
+
+        .btn-share {
+            background: #fff;
+            color: #1e3c72;
+            border: 2px solid #7e22ce;
+        }
+
+        .btn-share:hover {
+            background: linear-gradient(135deg, #7e22ce, #a855f7);
+            color: #fff;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(126, 34, 206, 0.3);
+        }
+
+        .btn svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+
+        .card-footer {
+            text-align: center;
+            padding: 22px 30px;
+            background: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .card-footer p {
+            color: #999;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .card-footer .college-name {
+            color: #1e3c72;
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        /* Celebration confetti */
+        .confetti-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+            display: none;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            top: -10px;
+            animation: confettiFall 3s ease-in forwards;
+        }
+
+        @keyframes confettiFall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        @media (max-width: 550px) {
+            body { padding: 12px; }
+            .card { border-radius: 22px; }
+            .card-header { padding: 28px 24px 24px; }
+            .card-header h1 { font-size: 22px; }
+            .card-body { padding: 28px 24px; }
+            .event-title h2 { font-size: 24px; }
+            .hero-image-placeholder { height: 220px; padding: 20px; }
+            .hero-image-placeholder h3 { font-size: 26px; }
+            .detail-item { padding: 14px 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="icon-container">
+                💼
+            </div>
+            <h1>دعوة لحضور ملتقى توظيف</h1>
+            <p class="subtitle">الكلية التقنية بالأحساء</p>
+            <span class="badge">⭐ فرصتك لمستقبل مهني مميز</span>
+        </div>
+
+        <div class="card-body">
+            <!-- صورة الدعوة / Placeholder -->
+            <div class="hero-image">
+                <!-- يمكن استبدال src بمسار الصورة الفعلية -->
+                <img src="job_fair_image.png" alt="ملتقى الكفاءات التقنية" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                <div class="hero-image-placeholder" style="display: none;">
+                    <div class="icon">💼</div>
+                    <h3>الكفاءات التقنية</h3>
+                    <p>ملتقى التوظيف 2026</p>
+                </div>
+            </div>
+
+            <div class="event-title">
+                <h2>ملتقى الكفاءات التقنية</h2>
+                <p>فرصة استثنائية للقاء أبرز الشركات الرائدة واستكشاف الفرص الوظيفية المميزة في القطاع التقني</p>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="details">
+                <div class="detail-item">
+                    <div class="detail-icon">📅</div>
+                    <div class="detail-text">
+                        <div class="label">التاريخ</div>
+                        <div class="value">يوم الأحد 15 - لمدة يومين</div>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">⏰</div>
+                    <div class="detail-text">
+                        <div class="label">المدة</div>
+                        <div class="value">يومان متتاليان</div>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">📍</div>
+                    <div class="detail-text">
+                        <div class="label">الموقع</div>
+                        <div class="value">مسرح الكلية التقنية</div>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon">🎯</div>
+                    <div class="detail-text">
+                        <div class="label">الفئة المستهدفة</div>
+                        <div class="value">الخريجين والباحثين عن عمل</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="message-box">
+                <p>
+                    يسرنا دعوتكم لحضور <span class="highlight">ملتقى الكفاءات التقنية</span>، حيث ستتاح لكم فرصة اللقاء المباشر مع ممثلي الشركات الرائدة، تقديم السير الذاتية، والمشاركة في مقابلات توظيفية فورية. لا تفوتوا هذه الفرصة الذهبية لبناء مستقبلكم المهني!
+                </p>
+            </div>
+
+            <div class="buttons">
+                <a href="attendance_form.html" class="btn btn-register" id="registerBtn">
+                    <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                    تسجيل الحضور
+                </a>
+                <a href="#" class="btn btn-share" id="shareBtn" onclick="shareOnWhatsApp(event)">
+                    <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    مشاركة عبر واتساب
+                </a>
+            </div>
+        </div>
+
+        <div class="card-footer">
+            <p class="college-name">الكلية التقنية بالأحساء</p>
+            <p>المؤسسة العامة للتدريب التقني والمهني</p>
+        </div>
+    </div>
+
+    <div class="confetti-container" id="confetti"></div>
+
+    <script>
+        function shareOnWhatsApp(e) {
+            e.preventDefault();
+            const text = encodeURIComponent(
+                '💼 *ملتقى الكفاءات التقنية*\n\n' +
+                'دعوة لحضور ملتقى التوظيف\n' +
+                'الكلية التقنية بالأحساء\n\n' +
+                '📅 يوم الأحد 15 - لمدة يومين\n' +
+                '📍 مسرح الكلية التقنية\n' +
+                '🎯 فرصة للقاء الشركات الرائدة\n\n' +
+                '✨ لا تفوت الفرصة!\n\n' +
+                'للتسجيل:\n' +
+                window.location.href.replace('job_fair_invitation.html', 'attendance_form.html')
+            );
+            window.open('https://wa.me/?text=' + text, '_blank');
+        }
+
+        // Confetti celebration on register button hover
+        document.getElementById('registerBtn').addEventListener('mouseenter', function() {
+            launchConfetti();
+        });
+
+        function launchConfetti() {
+            const container = document.getElementById('confetti');
+            container.style.display = 'block';
+            container.innerHTML = '';
+            const colors = ['#7e22ce', '#a855f7', '#1e3c72', '#2a5298', '#fff', '#FFD700'];
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDelay = Math.random() * 1.5 + 's';
+                confetti.style.animationDuration = (2 + Math.random() * 2.5) + 's';
+                confetti.style.width = (6 + Math.random() * 10) + 'px';
+                confetti.style.height = (6 + Math.random() * 10) + 'px';
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                container.appendChild(confetti);
+            }
+            setTimeout(() => { container.style.display = 'none'; }, 4500);
+        }
+    </script>
+</body>
+</html>
