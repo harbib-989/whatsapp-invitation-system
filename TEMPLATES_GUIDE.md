@@ -11,9 +11,17 @@
 
 ## تفعيل القالب الرسمي (للمسؤولين)
 
+القالب الرسمي له نسختان:
+- **بدون صورة** (نص + أزرار): `create_vip_template.py`
+- **مع صورة** (مثل الدعوة العامة): `create_vip_template_with_image.py`
+
 ### 1. إنشاء القالب في Twilio
 
 ```bash
+# قالب مع صورة (موصى به)
+python create_vip_template_with_image.py
+
+# أو قالب نصي فقط
 python create_vip_template.py
 ```
 
