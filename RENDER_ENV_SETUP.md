@@ -17,7 +17,7 @@
 |---------|-------|-------|
 | `EVENT_MODE` | `dialogue` أو `job_fair` | نوع الفعالية - الافتراضي: `dialogue` |
 | `CONTENT_SID` | SID القالب العام | مثال: HX5f92c7470551312f6d1d461f16dafdb6 |
-| `CONTENT_SID_VIP` | قالب الدعوة الرسمية للمسؤولين | يُنشأ عبر create_vip_template.py |
+| `CONTENT_SID_VIP` | قالب الدعوة الرسمية للمسؤولين | مثال: HXe8c0b79c33f7c9c1254f74c39ba547fb |
 
 ### EVENT_MODE = dialogue (افتراضي)
 - **حوار: دور الرؤية في تعزيز الهوية الوطنية**
@@ -29,14 +29,14 @@
 - نصائح: سيرة ذاتية، ملابس رسمية، مقابلات
 - القالب: HX7f91572f7f87564aa0265dbe20b6ae12
 
-## مثال إعداد حوار دور الرؤية
+## مثال إعداد ملتقى الكفاءات (مع القالب الرسمي)
 
 ```
 TWILIO_ACCOUNT_SID=ACxxxxxxxx
 TWILIO_AUTH_TOKEN=your_token
 TWILIO_FROM_PHONE=whatsapp:+966550308539
-EVENT_MODE=dialogue
-CONTENT_SID=HX5f92c7470551312f6d1d461f16dafdb6
+EVENT_MODE=job_fair
+CONTENT_SID_VIP=HXe8c0b79c33f7c9c1254f74c39ba547fb
 ```
 
 ## ملاحظة
