@@ -544,14 +544,17 @@ def get_or_create_template():
 
 
 def get_image_url():
-    """جلب رابط صورة الدعوة من ملف الإعدادات"""
-    if os.path.exists(CONFIG_FILE):
+    """جلب رابط صورة الدعوة - يتجنب raw.githubusercontent.com (يسبب 63019)"""
+    url = os.environ.get("IMAGE_URL", "")
+    if not url and os.path.exists(CONFIG_FILE):
         try:
             with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-                return json.load(f).get("image_url", "")
+                url = json.load(f).get("image_url", "")
         except Exception:
             pass
-    return ""
+    if url and "raw.githubusercontent.com" in url:
+        return ""  # Twilio لا يستطيع تحميله
+    return url or ""
 
 
 def get_base_url():
@@ -593,11 +596,7 @@ def send_single_invitation(to_phone, name, content_sid=None, template_id=None, p
     else:
         content_vars = {"1": name}
 
-    # محاولة 1: إرسال رسالة نصية مع صورة (أكثر استقراراً - يتجنب خطأ 63019)
-    image_url = get_image_url() or (
-        "https://raw.githubusercontent.com/harbib-989/whatsapp-invitation-system/main/job_fair_image.png"
-        if ev.get("event_name", "").find("ملتقى") >= 0 else ""
-    )
+    image_url = get_image_url()  # يتجنب تلقائياً raw.githubusercontent.com (63019)
 
     if is_vip:
         greeting = f"المكرم *{name}* {position.strip() if position else 'الكرام'} حفظه الله"
@@ -632,8 +631,9 @@ def send_single_invitation(to_phone, name, content_sid=None, template_id=None, p
         if image_url:
             msg_params["media_url"] = [image_url]
         msg = client.messages.create(**msg_params)
-        logger.info(f"✅ تم إرسال دعوة نصية مع صورة إلى {name}")
-        return True, msg.sid, "text_with_image"
+        msg_type = "text_with_image" if image_url else "text"
+        logger.info(f"✅ تم إرسال دعوة ({msg_type}) إلى {name}")
+        return True, msg.sid, msg_type
     except Exception as e:
         logger.warning(f"⚠️ فشل إرسال نص+صورة (قد يكون خطأ 63019): {e}")
         # محاولة بدون صورة
