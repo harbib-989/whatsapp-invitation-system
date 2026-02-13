@@ -761,13 +761,32 @@
         let isConnected = false;
         let autoRefreshInterval = null;
 
+        // دعم Render: مهلة أطول وإعادة محاولة عند سكون السيرفر
+        async function fetchWithRetry(url, options, retries = 2) {
+            const isRender = !API_BASE.includes('localhost');
+            const timeout = isRender ? 90000 : 15000;
+            for (let i = 0; i <= retries; i++) {
+                try {
+                    const ctrl = new AbortController();
+                    const tid = setTimeout(() => ctrl.abort(), timeout);
+                    const res = await fetch(url, { ...options, signal: ctrl.signal });
+                    clearTimeout(tid);
+                    return res;
+                } catch (e) {
+                    if (i < retries && isRender) {
+                        await new Promise(r => setTimeout(r, 3000));
+                    } else throw e;
+                }
+            }
+        }
+
         // ============================================================
         // Data Fetching
         // ============================================================
 
         async function fetchStats() {
             try {
-                const res = await fetch(`${API_BASE}/api/stats`);
+                const res = await fetchWithRetry(`${API_BASE}/api/stats`, {});
                 if (!res.ok) throw new Error('Server error');
                 const stats = await res.json();
 
@@ -788,7 +807,7 @@
 
         async function fetchResponses() {
             try {
-                const res = await fetch(`${API_BASE}/api/responses`);
+                const res = await fetchWithRetry(`${API_BASE}/api/responses`, {});
                 if (!res.ok) throw new Error('Server error');
                 allResponses = await res.json();
 
@@ -1083,7 +1102,7 @@
             resultDiv.className = 'send-result';
 
             try {
-                const res = await fetch(`${API_BASE}/api/send`, {
+                const res = await fetchWithRetry(`${API_BASE}/api/send`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, phone })
@@ -1103,8 +1122,11 @@
                 }
             } catch (e) {
                 resultDiv.className = 'send-result error';
-                resultDiv.textContent = '❌ خطأ في الاتصال بالسيرفر. تأكد من تشغيل: python webhook_server.py ثم افتح http://localhost:5000/dashboard';
-                showToast('خطأ في الاتصال - شغّل السيرفر أولاً', 'error');
+                const hint = API_BASE.includes('localhost')
+                    ? 'تأكد من تشغيل: python webhook_server.py'
+                    : 'إذا كان الموقع على Render، السيرفر قد يكون نائماً - انتظر دقيقة ثم أعد المحاولة.';
+                resultDiv.textContent = `❌ خطأ في الاتصال بالسيرفر (${API_BASE}). ${hint}`;
+                showToast('خطأ في الاتصال - أعد المحاولة بعد قليل', 'error');
             }
 
             btn.disabled = false;
@@ -1155,7 +1177,7 @@
             resultDiv.className = 'send-result';
 
             try {
-                const res = await fetch(`${API_BASE}/api/send-bulk`, {
+                const res = await fetchWithRetry(`${API_BASE}/api/send-bulk`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ recipients })
@@ -1173,7 +1195,10 @@
                 }
             } catch (e) {
                 resultDiv.className = 'send-result error';
-                resultDiv.textContent = '❌ خطأ في الاتصال بالسيرفر. تأكد من تشغيل: python webhook_server.py ثم افتح http://localhost:5000/dashboard';
+                const hint = API_BASE.includes('localhost')
+                    ? 'تأكد من تشغيل: python webhook_server.py'
+                    : 'إذا كان الموقع على Render، السيرفر قد يكون نائماً - انتظر دقيقة ثم أعد المحاولة.';
+                resultDiv.textContent = `❌ خطأ في الاتصال بالسيرفر (${API_BASE}). ${hint}`;
             }
 
             btn.disabled = false;

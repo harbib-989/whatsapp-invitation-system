@@ -60,18 +60,60 @@ ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID", "")
 AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "")
 FROM_PHONE = os.environ.get("TWILIO_FROM_PHONE", "whatsapp:+966550308539")
 
-# WhatsApp Content Template SID لملتقى الكفاءات التقنية
-JOB_FAIR_CONTENT_SID = "HX7f91572f7f87564aa0265dbe20b6ae12"
-
-# معلومات الفعالية
-EVENT_NAME = "ملتقى الكفاءات التقنية"
-EVENT_DATE = "يوم الأحد 15"
-EVENT_DURATION = "يومان متتاليان"
-EVENT_LOCATION = "مسرح الكلية التقنية - الكلية التقنية بالأحساء"
+# قوالب المحتوى
+DIALOGUE_CONTENT_SID = "HX5f92c7470551312f6d1d461f16dafdb6"  # حوار: دور الرؤية
+JOB_FAIR_CONTENT_SID = "HX7f91572f7f87564aa0265dbe20b6ae12"   # ملتقى الكفاءات
 
 INVITEES_FILE = "invitees.json"
 RESPONSES_FILE = "responses.json"
 CONFIG_FILE = "config.json"
+
+# تحميل الإعدادات: أولاً من env (لـ Render)، ثم config.json، ثم القيم الافتراضية
+def _load_config():
+    cfg = {}
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                cfg = json.load(f)
+        except Exception:
+            pass
+    return cfg
+
+_config_cache = {}
+
+def get_event_config():
+    """تفاصيل الفعالية الحالية - للرد التلقائي والإرسال"""
+    if _config_cache:
+        return _config_cache
+
+    cfg = _load_config()
+    mode = os.environ.get("EVENT_MODE", cfg.get("event_mode", "dialogue"))
+
+    if mode == "job_fair":
+        _config_cache.update({
+            "event_name": "ملتقى الكفاءات التقنية",
+            "event_date": "يوم الأحد 15",
+            "event_time": "لمدة يومين",
+            "event_location": "مسرح الكلية التقنية - الكلية التقنية بالأحساء",
+            "accept_tips": (
+                "💡 نصائح مهمة:\n"
+                "• أحضر سيرتك الذاتية مطبوعة\n"
+                "• ارتدِ ملابس رسمية\n"
+                "• كن مستعداً للمقابلات الفورية\n"
+            ),
+            "content_sid": os.environ.get("CONTENT_SID") or cfg.get("content_sid") or JOB_FAIR_CONTENT_SID,
+        })
+    else:
+        # افتراضي: حوار دور الرؤية
+        _config_cache.update({
+            "event_name": "حوار: دور الرؤية في تعزيز الهوية الوطنية",
+            "event_date": "الإثنين ٢١ شعبان ١٤٤٧هـ",
+            "event_time": "١٠:٠٠ صباحاً",
+            "event_location": "مسرح الكلية مبنى ٩ - الكلية التقنية بالأحساء",
+            "accept_tips": "",
+            "content_sid": os.environ.get("CONTENT_SID") or cfg.get("content_sid") or DIALOGUE_CONTENT_SID,
+        })
+    return _config_cache
 
 # ============================================================
 # إعداد التسجيل
@@ -196,32 +238,31 @@ def webhook():
     action_text = button_payload if button_payload else body
     action = classify_response(action_text)
 
-    # البحث عن المدعو
+    # البحث عن المدعو - إن لم يُعثر عليه استخدم "عزيزي المدعو" بدل الرقم
     invitee = find_invitee_by_phone(from_number)
     phone_clean = from_number.replace("whatsapp:", "").replace("+", "")
-    name = invitee["name"] if invitee else phone_clean
+    name = invitee["name"] if invitee else "عزيزي المدعو"
+
+    ev = get_event_config()
 
     # إنشاء الرد التلقائي
     resp = MessagingResponse()
 
     if action == "accept":
         status = "تأكيد حضور"
+        tips = ev.get("accept_tips", "")
+        tips_block = f"\n{tips}\n" if tips else "\n"
         reply = (
             f"✅ *تم تأكيد حضورك بنجاح!*\n"
             f"\n"
             f"شكراً *{name}* 🎉\n"
             f"\n"
             f"نتشرف بحضورك في:\n"
-            f"💼 *ملتقى الكفاءات التقنية*\n"
+            f"💼 *{ev['event_name']}*\n"
             f"\n"
-            f"📅 يوم الأحد 15 - لمدة يومين\n"
-            f"📍 مسرح الكلية التقنية\n"
-            f"\n"
-            f"💡 نصائح مهمة:\n"
-            f"• أحضر سيرتك الذاتية مطبوعة\n"
-            f"• ارتدِ ملابس رسمية\n"
-            f"• كن مستعداً للمقابلات الفورية\n"
-            f"\n"
+            f"📅 {ev['event_date']} - {ev['event_time']}\n"
+            f"📍 {ev['event_location']}\n"
+            f"{tips_block}"
             f"سنرسل لك تذكيراً قبل الفعالية 📲\n"
             f"\n"
             f"في انتظار حضورك! 🌟\n"
@@ -247,7 +288,7 @@ def webhook():
         reply = (
             f"مرحباً *{name}*! 👋\n"
             f"\n"
-            f"للرد على دعوة *ملتقى الكفاءات التقنية*:\n"
+            f"للرد على دعوة *{ev['event_name']}*:\n"
             f"\n"
             f"✅ اكتب: *تأكيد* أو *1* للحضور\n"
             f"❌ اكتب: *اعتذار* أو *2* للاعتذار\n"
@@ -400,22 +441,31 @@ def format_saudi_phone(phone):
 
 def get_or_create_template():
     """جلب أو إنشاء قالب الدعوة التفاعلي"""
-    # التحقق من وجود قالب محفوظ
+    ev = get_event_config()
+    content_sid = ev.get("content_sid")
+
+    # التحقق من وجود قالب محفوظ في config
     if os.path.exists(CONFIG_FILE):
-        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-            config = json.load(f)
-        if config.get("content_sid"):
-            return config["content_sid"]
+        try:
+            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                config = json.load(f)
+            if config.get("content_sid"):
+                return config["content_sid"]
+        except Exception:
+            pass
+
+    if content_sid:
+        return content_sid
 
     # إنشاء قالب جديد (بدون إيموجي في الأزرار - شرط WhatsApp Business API)
     body_text = (
         'دعوة رسمية\n\n'
         'المكرم {{1}} حفظه الله\n'
         'السلام عليكم ورحمة الله وبركاته\n\n'
-        'يسرنا دعوتكم لحضور ' + EVENT_NAME + '\n\n'
-        'التاريخ: ' + EVENT_DATE + '\n'
-        'الوقت: ' + EVENT_TIME + '\n'
-        'المكان: ' + EVENT_LOCATION + '\n\n'
+        'يسرنا دعوتكم لحضور ' + ev["event_name"] + '\n\n'
+        'التاريخ: ' + ev["event_date"] + '\n'
+        'الوقت: ' + ev["event_time"] + '\n'
+        'المكان: ' + ev["event_location"] + '\n\n'
         'حضوركم يسعدنا ويشرفنا\n\n'
         'الكلية التقنية بالاحساء\n'
         'المؤسسة العامة للتدريب التقني والمهني'
@@ -485,10 +535,10 @@ def get_base_url():
 def send_single_invitation(to_phone, name, content_sid=None):
     """إرسال دعوة واحدة مع أزرار تفاعلية"""
     client = Client(ACCOUNT_SID, AUTH_TOKEN)
+    ev = get_event_config()
 
-    # استخدام Content SID لملتقى الكفاءات التقنية
     if not content_sid:
-        content_sid = JOB_FAIR_CONTENT_SID
+        content_sid = get_or_create_template() or ev["content_sid"]
 
     # محاولة 1: إرسال WhatsApp Card بأزرار (إذا معتمد من WhatsApp)
     try:
@@ -503,17 +553,20 @@ def send_single_invitation(to_phone, name, content_sid=None):
     except Exception as e:
         logger.warning(f"⚠️ فشل إرسال WhatsApp Card (قد يكون غير معتمد بعد): {e}")
     
-    # محاولة 2: Fallback - إرسال رسالة نصية مع صورة
-    image_url = "https://raw.githubusercontent.com/harbib-989/whatsapp-invitation-system/main/job_fair_image.png"
-    
+    # محاولة 2: Fallback - إرسال رسالة نصية
+    image_url = get_image_url() or (
+        "https://raw.githubusercontent.com/harbib-989/whatsapp-invitation-system/main/job_fair_image.png"
+        if ev.get("event_name", "").find("ملتقى") >= 0 else ""
+    )
+
     body = (
-        f"💼 *ملتقى الكفاءات التقنية*\n\n"
+        f"🎤 *{ev['event_name']}*\n\n"
         f"عزيزي *{name}*، السلام عليكم ورحمة الله 🌹\n\n"
-        f"يسرنا دعوتك لحضور ملتقى التوظيف:\n\n"
-        f"📅 التاريخ: {EVENT_DATE}\n"
-        f"⏰ المدة: {EVENT_DURATION}\n"
-        f"📍 الموقع: {EVENT_LOCATION}\n\n"
-        f"🎯 فرصة للقاء الشركات الرائدة والحصول على وظيفة مميزة!\n\n"
+        f"يسرنا دعوتكم لحضور:\n\n"
+        f"📅 التاريخ: {ev['event_date']}\n"
+        f"🕐 الوقت: {ev['event_time']}\n"
+        f"📍 المكان: {ev['event_location']}\n\n"
+        f"حضوركم يُسعدنا ويُشرّفنا 🌹\n\n"
         f"━━━━━━━━━━━━━━━━━━\n"
         f"🔹 للرد على الدعوة:\n"
         f"✅ اكتب: *تأكيد* أو *1* للحضور\n"
@@ -727,9 +780,10 @@ def webhook_decline():
         try:
             if ACCOUNT_SID and AUTH_TOKEN:
                 client = Client(ACCOUNT_SID, AUTH_TOKEN)
+                ev = get_event_config()
                 thank_you_msg = (
                     f"شكراً {name}،\n\n"
-                    f"تم استلام اعتذارك عن حضور ملتقى الكفاءات التقنية.\n"
+                    f"تم استلام اعتذارك عن حضور {ev['event_name']}.\n"
                     f"نتمنى لك كل التوفيق ونأمل رؤيتك في الفعاليات القادمة.\n\n"
                     f"الكلية التقنية بالأحساء"
                 )
