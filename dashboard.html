@@ -751,9 +751,12 @@
 
     <script>
         // ============================================================
-        // API Base URL
+        // API Base URL - استخدم السيرفر المحلي عند فتح الملف مباشرة
         // ============================================================
-        const API_BASE = window.location.origin;
+        const origin = window.location.origin || '';
+        const API_BASE = (origin.startsWith('http://') || origin.startsWith('https://'))
+            ? origin 
+            : 'http://localhost:5000';
         let allResponses = [];
         let isConnected = false;
         let autoRefreshInterval = null;
@@ -1100,8 +1103,8 @@
                 }
             } catch (e) {
                 resultDiv.className = 'send-result error';
-                resultDiv.textContent = '❌ خطأ في الاتصال بالسيرفر';
-                showToast('خطأ في الاتصال', 'error');
+                resultDiv.textContent = '❌ خطأ في الاتصال بالسيرفر. تأكد من تشغيل: python webhook_server.py ثم افتح http://localhost:5000/dashboard';
+                showToast('خطأ في الاتصال - شغّل السيرفر أولاً', 'error');
             }
 
             btn.disabled = false;
@@ -1170,7 +1173,7 @@
                 }
             } catch (e) {
                 resultDiv.className = 'send-result error';
-                resultDiv.textContent = '❌ خطأ في الاتصال بالسيرفر';
+                resultDiv.textContent = '❌ خطأ في الاتصال بالسيرفر. تأكد من تشغيل: python webhook_server.py ثم افتح http://localhost:5000/dashboard';
             }
 
             btn.disabled = false;
