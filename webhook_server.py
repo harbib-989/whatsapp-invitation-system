@@ -544,7 +544,7 @@ def get_or_create_template():
 
 
 def get_image_url():
-    """جلب رابط صورة الدعوة - يتجنب raw.githubusercontent.com (يسبب 63019)"""
+    """جلب رابط صورة الدعوة - نستخدم رابط السيرفر نفسه (يعمل مع Twilio)"""
     url = os.environ.get("IMAGE_URL", "")
     if not url and os.path.exists(CONFIG_FILE):
         try:
@@ -553,7 +553,12 @@ def get_image_url():
         except Exception:
             pass
     if url and "raw.githubusercontent.com" in url:
-        return ""  # Twilio لا يستطيع تحميله
+        url = ""  # Twilio لا يستطيع تحميله
+    if not url:
+        # استخدام الصورة من سيرفرنا - يعمل على Render ومحلياً مع ngrok
+        base = get_base_url()
+        if base:
+            url = f"{base.rstrip('/')}/media/job_fair_image.png"
     return url or ""
 
 
@@ -796,6 +801,15 @@ def serve_invitation_image():
 def serve_invitation_image_alt():
     """تقديم صورة الدعوة (رابط بديل)"""
     img_path = os.path.join("static", "invitation.png")
+    if os.path.exists(img_path):
+        return send_file(img_path, mimetype="image/png")
+    return "Image not found", 404
+
+
+@app.route("/media/job_fair_image.png")
+def serve_job_fair_image():
+    """تقديم صورة ملتقى الكفاءات - لاستخدامها مع Twilio (يتجنب 63019 من GitHub)"""
+    img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "job_fair_image.png")
     if os.path.exists(img_path):
         return send_file(img_path, mimetype="image/png")
     return "Image not found", 404
