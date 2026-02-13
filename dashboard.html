@@ -477,7 +477,7 @@
 
         .send-form {
             display: grid;
-            grid-template-columns: 1fr 1fr auto;
+            grid-template-columns: 1fr 1fr 1fr 1fr auto;
             gap: 12px;
             align-items: end;
         }
@@ -504,6 +504,25 @@
             outline: none;
             border-color: #25D366;
         }
+
+        .form-field select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid #e8e8e8;
+            border-radius: 10px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 14px;
+            background: #fff;
+            cursor: pointer;
+        }
+
+        .form-field select:focus {
+            outline: none;
+            border-color: #25D366;
+        }
+
+        .form-field.template-position { display: none; }
+        .form-field.template-position.show { display: block; }
 
         .btn-send {
             padding: 12px 24px;
@@ -686,6 +705,16 @@
                         <label>رقم الجوال</label>
                         <input type="tel" id="sendPhone" placeholder="05XXXXXXXX" dir="ltr" style="text-align:right">
                     </div>
+                    <div class="form-field">
+                        <label>نوع الدعوة</label>
+                        <select id="sendTemplate" onchange="togglePositionField()">
+                            <option value="standard">دعوة عامة</option>
+                        </select>
+                    </div>
+                    <div class="form-field template-position" id="positionField">
+                        <label>المنصب</label>
+                        <input type="text" id="sendPosition" placeholder="مدير الإدارة، رئيس القسم...">
+                    </div>
                     <button class="btn-send" id="sendBtn" onclick="sendSingle()">
                         📨 إرسال الدعوة
                     </button>
@@ -693,9 +722,10 @@
 
                 <!-- إرسال جماعي -->
                 <div class="bulk-area">
-                    <label style="font-size:13px; font-weight:600; color:#666;">إرسال جماعي (كل سطر: الاسم، رقم الجوال)</label>
-                    <p class="bulk-hint">كل سطر مدعو واحد. الفصل بـ: فاصلة أو شرطة أو مسافات. مثال: أحمد محمد ، 0551234567</p>
-                    <textarea id="bulkList" placeholder="أحمد محمد ، 0551234567&#10;سارة علي - 0559876543&#10;خالد حسن  0567891234"></textarea>
+                    <label style="font-size:13px; font-weight:600; color:#666;">إرسال جماعي</label>
+                    <p class="bulk-hint">نوع الدعوة: <select id="bulkTemplate" onchange="updateBulkHint()" style="padding:4px 8px; border-radius:6px; margin:0 4px;"></select></p>
+                    <p class="bulk-hint" id="bulkFormatHint">كل سطر: الاسم، رقم الجوال. مثال: أحمد محمد ، 0551234567</p>
+                    <textarea id="bulkList" placeholder="أحمد محمد ، 0551234567&#10;سارة علي - 0559876543"></textarea>
                     <button class="btn-send" id="bulkBtn" onclick="sendBulk()" style="margin-top:10px;">
                         📤 إرسال جماعي
                     </button>
@@ -760,6 +790,7 @@
         let allResponses = [];
         let isConnected = false;
         let autoRefreshInterval = null;
+        let availableTemplates = [];
 
         // دعم Render: مهلة أطول وإعادة محاولة عند سكون السيرفر
         async function fetchWithRetry(url, options, retries = 2) {
@@ -820,9 +851,61 @@
             }
         }
 
+        async function fetchTemplates() {
+            try {
+                const res = await fetchWithRetry(`${API_BASE}/api/templates`, {});
+                if (res.ok) {
+                    availableTemplates = await res.json();
+                    loadTemplateOptions();
+                    return availableTemplates;
+                }
+            } catch (e) { console.error('Failed to fetch templates:', e); }
+            return [];
+        }
+
+        function loadTemplateOptions() {
+            const sel = document.getElementById('sendTemplate');
+            const bulkSel = document.getElementById('bulkTemplate');
+            if (!sel) return;
+            sel.innerHTML = '';
+            bulkSel.innerHTML = '';
+            availableTemplates.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = t.name;
+                sel.appendChild(opt.cloneNode(true));
+                bulkSel.appendChild(opt);
+            });
+            togglePositionField();
+        }
+
+        function togglePositionField() {
+            const tid = document.getElementById('sendTemplate').value;
+            const t = availableTemplates.find(x => x.id === tid);
+            const f = document.getElementById('positionField');
+            if (t && t.position_required) {
+                f.classList.add('show');
+                f.querySelector('input').placeholder = 'مدير الإدارة، رئيس القسم...';
+            } else {
+                f.classList.remove('show');
+            }
+        }
+
+        function updateBulkHint() {
+            const tid = document.getElementById('bulkTemplate').value;
+            const t = availableTemplates.find(x => x.id === tid);
+            const hint = document.getElementById('bulkFormatHint');
+            if (t && t.position_required) {
+                hint.textContent = 'كل سطر: الاسم، الرقم، المنصب. مثال: سعادة مدير الإدارة، 0551234567، مدير الشؤون الإدارية';
+            } else {
+                hint.textContent = 'كل سطر: الاسم، رقم الجوال. مثال: أحمد محمد ، 0551234567';
+            }
+        }
+
         async function refreshData() {
             const stats = await fetchStats();
             const responses = await fetchResponses();
+            if (availableTemplates.length === 0) await fetchTemplates();
 
             if (responses !== null) {
                 renderTable();
@@ -1101,11 +1184,14 @@
             btn.innerHTML = '⏳ جاري الإرسال...';
             resultDiv.className = 'send-result';
 
+            const templateId = document.getElementById('sendTemplate').value;
+            const position = document.getElementById('sendPosition').value.trim();
+
             try {
                 const res = await fetchWithRetry(`${API_BASE}/api/send`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, phone })
+                    body: JSON.stringify({ name, phone, template_id: templateId, position })
                 });
                 const data = await res.json();
 
@@ -1114,6 +1200,7 @@
                     resultDiv.textContent = `✅ تم إرسال الدعوة إلى ${name} بنجاح!`;
                     document.getElementById('sendName').value = '';
                     document.getElementById('sendPhone').value = '';
+                    document.getElementById('sendPosition').value = '';
                     showToast('تم إرسال الدعوة بنجاح', 'success');
                 } else {
                     resultDiv.className = 'send-result error';
@@ -1145,24 +1232,26 @@
 
             const lines = text.split('\n').filter(l => l.trim());
             const recipients = [];
+            const templateId = document.getElementById('bulkTemplate').value;
+            const needPosition = availableTemplates.find(t => t.id === templateId)?.position_required;
 
             for (const line of lines) {
-                // يدعم الفصل بـ: فاصلة ، - | تاب أو مسافات متعددة
-                const parts = line.split(/[,،\-\|\t]+|\s{2,}/);
+                const parts = line.split(/[,،\-\|\t]+|\s{2,}/).map(p => p.trim()).filter(Boolean);
                 if (parts.length >= 2) {
-                    const name = parts[0].trim();
-                    // البحث عن الرقم في أي جزء
+                    const name = parts[0];
                     let phone = '';
+                    let position = '';
                     for (let i = 1; i < parts.length; i++) {
-                        const cleaned = parts[i].trim().replace(/\s/g, '');
+                        const cleaned = parts[i].replace(/\s/g, '');
                         if (/^[\d\+]{9,15}$/.test(cleaned)) {
                             phone = cleaned;
+                            if (needPosition && i + 1 < parts.length) position = parts.slice(i + 1).join(' ').trim();
                             break;
                         }
                     }
-                    if (!phone) phone = parts[1].trim();
+                    if (!phone) phone = parts[1];
                     if (name && phone) {
-                        recipients.push({ name, phone });
+                        recipients.push({ name, phone, position });
                     }
                 }
             }
@@ -1180,7 +1269,7 @@
                 const res = await fetchWithRetry(`${API_BASE}/api/send-bulk`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ recipients })
+                    body: JSON.stringify({ recipients, template_id: templateId })
                 });
                 const data = await res.json();
 
@@ -1232,6 +1321,7 @@
         // ============================================================
 
         async function init() {
+            await fetchTemplates();
             await refreshData();
             startAutoRefresh();
         }

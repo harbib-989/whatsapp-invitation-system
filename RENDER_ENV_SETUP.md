@@ -16,7 +16,8 @@
 | المتغير | القيم | الوصف |
 |---------|-------|-------|
 | `EVENT_MODE` | `dialogue` أو `job_fair` | نوع الفعالية - الافتراضي: `dialogue` |
-| `CONTENT_SID` | SID القالب | مثال: HX5f92c7470551312f6d1d461f16dafdb6 |
+| `CONTENT_SID` | SID القالب العام | مثال: HX5f92c7470551312f6d1d461f16dafdb6 |
+| `CONTENT_SID_VIP` | قالب الدعوة الرسمية للمسؤولين | يُنشأ عبر create_vip_template.py |
 
 ### EVENT_MODE = dialogue (افتراضي)
 - **حوار: دور الرؤية في تعزيز الهوية الوطنية**

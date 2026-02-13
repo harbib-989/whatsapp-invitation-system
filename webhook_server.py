@@ -62,7 +62,32 @@ FROM_PHONE = os.environ.get("TWILIO_FROM_PHONE", "whatsapp:+966550308539")
 
 # قوالب المحتوى
 DIALOGUE_CONTENT_SID = "HX5f92c7470551312f6d1d461f16dafdb6"  # حوار: دور الرؤية
-JOB_FAIR_CONTENT_SID = "HX7f91572f7f87564aa0265dbe20b6ae12"   # ملتقى الكفاءات
+JOB_FAIR_CONTENT_SID = "HX7f91572f7f87564aa0265dbe20b6ae12"   # ملتقى الكفاءات - دعوة عامة
+# القالب الرسمي للمسؤولين يُنشأ عبر create_vip_template.py ثم يُضاف هنا أو في env
+
+def get_available_templates():
+    """القوالب المتاحة للاختيار عند الإرسال"""
+    cfg = _load_config()
+    vip_sid = os.environ.get("CONTENT_SID_VIP") or cfg.get("content_sid_vip", "")
+
+    templates = [
+        {
+            "id": "standard",
+            "name": "دعوة عامة - ملتقى الكفاءات",
+            "content_sid": JOB_FAIR_CONTENT_SID,
+            "variables": 1,
+            "position_required": False,
+        },
+    ]
+    if vip_sid:
+        templates.append({
+            "id": "vip",
+            "name": "دعوة رسمية - للمسؤولين وكبار الشخصيات",
+            "content_sid": vip_sid,
+            "variables": 2,
+            "position_required": True,
+        })
+    return templates
 
 INVITEES_FILE = "invitees.json"
 RESPONSES_FILE = "responses.json"
@@ -336,6 +361,12 @@ def webhook():
 # API Endpoints - للوحة المتابعة
 # ============================================================
 
+@app.route("/api/templates", methods=["GET"])
+def api_get_templates():
+    """جلب القوالب المتاحة للإرسال"""
+    return jsonify(get_available_templates())
+
+
 @app.route("/api/responses", methods=["GET"])
 def api_get_responses():
     """جلب جميع الردود"""
@@ -532,19 +563,41 @@ def get_base_url():
     return "https://whatsapp-invitation-system.onrender.com"
 
 
-def send_single_invitation(to_phone, name, content_sid=None):
-    """إرسال دعوة واحدة مع أزرار تفاعلية"""
+def send_single_invitation(to_phone, name, content_sid=None, template_id=None, position=""):
+    """إرسال دعوة واحدة مع أزرار تفاعلية
+    template_id: standard | vip - إن لم يُحدد يُستخدم content_sid أو الافتراضي
+    position: المنصب (مطلوب للقالب الرسمي)
+    """
     client = Client(ACCOUNT_SID, AUTH_TOKEN)
     ev = get_event_config()
 
-    if not content_sid:
+    # تحديد القالب
+    if template_id:
+        for t in get_available_templates():
+            if t["id"] == template_id:
+                content_sid = t["content_sid"]
+                is_vip = t.get("variables", 1) == 2
+                break
+        else:
+            content_sid = get_or_create_template() or ev["content_sid"]
+            is_vip = False
+    elif not content_sid:
         content_sid = get_or_create_template() or ev["content_sid"]
+        is_vip = False
+    else:
+        is_vip = any(t.get("variables") == 2 and t["content_sid"] == content_sid for t in get_available_templates())
+
+    # متغيرات القالب: القالب الرسمي يستخدم الاسم + المنصب (مثل: مدير الإدارة، رئيس القسم)
+    if is_vip:
+        content_vars = {"1": name, "2": position.strip() if position else "الكرام"}
+    else:
+        content_vars = {"1": name}
 
     # محاولة 1: إرسال WhatsApp Card بأزرار (إذا معتمد من WhatsApp)
     try:
         msg = client.messages.create(
             content_sid=content_sid,
-            content_variables=json.dumps({"1": name}),
+            content_variables=json.dumps(content_vars),
             from_=FROM_PHONE,
             to=f"whatsapp:+{to_phone}"
         )
@@ -559,10 +612,17 @@ def send_single_invitation(to_phone, name, content_sid=None):
         if ev.get("event_name", "").find("ملتقى") >= 0 else ""
     )
 
+    if is_vip:
+        greeting = f"المكرم *{name}* {position.strip() if position else 'الكرام'} حفظه الله"
+    else:
+        greeting = f"عزيزي *{name}*"
+
     body = (
-        f"🎤 *{ev['event_name']}*\n\n"
-        f"عزيزي *{name}*، السلام عليكم ورحمة الله 🌹\n\n"
+        f"💼 *دعوة رسمية*\n\n"
+        f"{greeting}\n"
+        f"السلام عليكم ورحمة الله وبركاته 🌹\n\n"
         f"يسرنا دعوتكم لحضور:\n\n"
+        f"*{ev['event_name']}*\n\n"
         f"📅 التاريخ: {ev['event_date']}\n"
         f"🕐 الوقت: {ev['event_time']}\n"
         f"📍 المكان: {ev['event_location']}\n\n"
@@ -603,9 +663,16 @@ def api_send_invitation():
 
     name = data.get("name", "").strip()
     phone = data.get("phone", "").strip()
+    template_id = data.get("template_id", "standard")
+    position = data.get("position", "").strip()
 
     if not name or not phone:
         return jsonify({"success": False, "error": "الاسم والرقم مطلوبان"}), 400
+
+    # التحقق: القالب الرسمي يتطلب المنصب
+    for t in get_available_templates():
+        if t["id"] == template_id and t.get("position_required") and not position:
+            return jsonify({"success": False, "error": "المنصب مطلوب للدعوة الرسمية"}), 400
 
     formatted = format_saudi_phone(phone)
     if not formatted:
@@ -617,13 +684,15 @@ def api_send_invitation():
         invitees.append({
             "name": name, "phone": formatted,
             "department": data.get("department", ""),
+            "position": position,
             "invited_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         })
         save_invitees(invitees)
 
     # إرسال الدعوة
-    content_sid = get_or_create_template()
-    success, result, msg_type = send_single_invitation(formatted, name, content_sid)
+    success, result, msg_type = send_single_invitation(
+        formatted, name, template_id=template_id, position=position
+    )
 
     if success:
         logger.info(f"📨 تم إرسال دعوة إلى {name} ({formatted}) من لوحة التحكم")
@@ -637,11 +706,11 @@ def api_send_bulk():
     """إرسال جماعي من لوحة التحكم"""
     data = request.get_json()
     recipients = data.get("recipients", [])
+    template_id = data.get("template_id", "standard")
 
     if not recipients:
         return jsonify({"success": False, "error": "لا يوجد مستلمون"}), 400
 
-    content_sid = get_or_create_template()
     results = []
     invitees = load_invitees()
     existing_phones = {inv.get("phone") for inv in invitees}
@@ -649,19 +718,30 @@ def api_send_bulk():
     for r in recipients:
         name = r.get("name", "").strip()
         phone = format_saudi_phone(r.get("phone", ""))
+        position = r.get("position", "").strip()
+
         if not name or not phone:
             results.append({"name": name, "status": "خطأ", "error": "بيانات غير صالحة"})
+            continue
+
+        # القالب الرسمي يتطلب المنصب
+        req_pos = any(t["id"] == template_id and t.get("position_required") for t in get_available_templates())
+        if req_pos and not position:
+            results.append({"name": name, "status": "خطأ", "error": "المنصب مطلوب"})
             continue
 
         if phone not in existing_phones:
             invitees.append({
                 "name": name, "phone": phone,
                 "department": r.get("department", ""),
+                "position": position,
                 "invited_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             })
             existing_phones.add(phone)
 
-        success, result, msg_type = send_single_invitation(phone, name, content_sid)
+        success, result, msg_type = send_single_invitation(
+            phone, name, template_id=template_id, position=position
+        )
         if success:
             results.append({"name": name, "phone": phone, "status": "نجاح", "type": msg_type})
         else:
