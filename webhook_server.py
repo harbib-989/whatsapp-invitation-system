@@ -593,20 +593,7 @@ def send_single_invitation(to_phone, name, content_sid=None, template_id=None, p
     else:
         content_vars = {"1": name}
 
-    # محاولة 1: إرسال WhatsApp Card بأزرار (إذا معتمد من WhatsApp)
-    try:
-        msg = client.messages.create(
-            content_sid=content_sid,
-            content_variables=json.dumps(content_vars),
-            from_=FROM_PHONE,
-            to=f"whatsapp:+{to_phone}"
-        )
-        logger.info(f"✅ تم إرسال دعوة بأزرار WhatsApp Card إلى {name}")
-        return True, msg.sid, "whatsapp_card"
-    except Exception as e:
-        logger.warning(f"⚠️ فشل إرسال WhatsApp Card (قد يكون غير معتمد بعد): {e}")
-    
-    # محاولة 2: Fallback - إرسال رسالة نصية
+    # محاولة 1: إرسال رسالة نصية مع صورة (أكثر استقراراً - يتجنب خطأ 63019)
     image_url = get_image_url() or (
         "https://raw.githubusercontent.com/harbib-989/whatsapp-invitation-system/main/job_fair_image.png"
         if ev.get("event_name", "").find("ملتقى") >= 0 else ""
@@ -635,20 +622,38 @@ def send_single_invitation(to_phone, name, content_sid=None, template_id=None, p
         f"_الكلية التقنية بالأحساء_"
     )
 
+    # محاولة 1: نص + صورة (يتجنب خطأ 63019 في قوالب Content)
     try:
         msg_params = {
             "body": body,
             "from_": FROM_PHONE,
             "to": f"whatsapp:+{to_phone}"
         }
-        
-        # إرسال الصورة مع الرسالة
         if image_url:
             msg_params["media_url"] = [image_url]
-
         msg = client.messages.create(**msg_params)
         logger.info(f"✅ تم إرسال دعوة نصية مع صورة إلى {name}")
         return True, msg.sid, "text_with_image"
+    except Exception as e:
+        logger.warning(f"⚠️ فشل إرسال نص+صورة (قد يكون خطأ 63019): {e}")
+        # محاولة بدون صورة
+        try:
+            msg = client.messages.create(body=body, from_=FROM_PHONE, to=f"whatsapp:+{to_phone}")
+            logger.info(f"✅ تم إرسال دعوة نصية إلى {name}")
+            return True, msg.sid, "text"
+        except Exception as e2:
+            logger.warning(f"⚠️ فشل إرسال نص: {e2}")
+    
+    # محاولة 2: WhatsApp Card (إن فشل الأول - قد يعطي خطأ 63019 إذا الصورة في القالب معطلة)
+    try:
+        msg = client.messages.create(
+            content_sid=content_sid,
+            content_variables=json.dumps(content_vars),
+            from_=FROM_PHONE,
+            to=f"whatsapp:+{to_phone}"
+        )
+        logger.info(f"✅ تم إرسال دعوة بأزرار WhatsApp Card إلى {name}")
+        return True, msg.sid, "whatsapp_card"
     except Exception as e:
         logger.error(f"❌ فشل إرسال الدعوة إلى {name}: {e}")
         return False, str(e), "error"
@@ -764,7 +769,10 @@ def api_send_bulk():
 @app.route("/dashboard")
 def serve_dashboard():
     """عرض لوحة المتابعة"""
-    return send_file("dashboard.html")
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dashboard.html")
+    if not os.path.exists(path):
+        return "dashboard.html not found", 404
+    return send_file(path)
 
 
 @app.route("/invitation")
