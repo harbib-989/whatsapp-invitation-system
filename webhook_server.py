@@ -63,12 +63,13 @@ FROM_PHONE = os.environ.get("TWILIO_FROM_PHONE", "whatsapp:+966550308539")
 # قوالب المحتوى
 DIALOGUE_CONTENT_SID = "HX5f92c7470551312f6d1d461f16dafdb6"  # حوار: دور الرؤية
 JOB_FAIR_CONTENT_SID = "HX7f91572f7f87564aa0265dbe20b6ae12"   # ملتقى الكفاءات - دعوة عامة
-# القالب الرسمي للمسؤولين يُنشأ عبر create_vip_template.py ثم يُضاف هنا أو في env
+JOB_FAIR_VIP_CARD_SID = "HXa6a9d1d0e54d1271b1c2628d3ac6d8c7"  # ملتقى الكفاءات - دعوة رسمية VIP Card
 
 def get_available_templates():
     """القوالب المتاحة للاختيار عند الإرسال"""
     cfg = _load_config()
     vip_sid = os.environ.get("CONTENT_SID_VIP") or cfg.get("content_sid_vip", "")
+    vip_card_sid = os.environ.get("CONTENT_SID_VIP_CARD") or cfg.get("content_sid_vip_card", "") or JOB_FAIR_VIP_CARD_SID
 
     templates = [
         {
@@ -82,8 +83,16 @@ def get_available_templates():
     if vip_sid:
         templates.append({
             "id": "vip",
-            "name": "دعوة رسمية - للمسؤولين وكبار الشخصيات",
+            "name": "دعوة رسمية - للمسؤولين (نصية)",
             "content_sid": vip_sid,
+            "variables": 2,
+            "position_required": True,
+        })
+    if vip_card_sid:
+        templates.append({
+            "id": "vip_card",
+            "name": "دعوة رسمية VIP - بطاقة مع صورة",
+            "content_sid": vip_card_sid,
             "variables": 2,
             "position_required": True,
         })

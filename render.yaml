@@ -21,5 +21,7 @@ services:
         sync: false
       - key: CONTENT_SID_VIP
         sync: false
+      - key: CONTENT_SID_VIP_CARD
+        sync: false
       - key: PYTHON_VERSION
         value: 3.11.0
