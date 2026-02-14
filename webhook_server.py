@@ -756,64 +756,62 @@ def api_send_bulk():
 # ============================================================
 
 @app.route("/")
+def serve_root():
+    """الصفحة الرئيسية - إعادة توجيه إلى dashboard"""
+    return send_file("dashboard.html")
+
+
+@app.route("/health")
+def health_check():
+    """Health check endpoint - للتأكد من أن السيرفر يعمل"""
+    return jsonify({
+        "status": "ok",
+        "message": "WhatsApp Invitation System is running",
+        "timestamp": datetime.now().isoformat(),
+        "version": "2.0"
+    }), 200
+
+
 @app.route("/dashboard")
 def serve_dashboard():
     """عرض لوحة المتابعة"""
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dashboard.html")
-    if not os.path.exists(path):
-        return "dashboard.html not found", 404
-    return send_file(path)
+    return send_file("dashboard.html")
 
 
 @app.route("/invitation")
 def serve_invitation():
     """عرض صفحة الدعوة"""
-    if os.path.exists("whatsapp_invitation.html"):
-        return send_file("whatsapp_invitation.html")
-    return "File not found", 404
+    return send_file("whatsapp_invitation.html")
 
 
 @app.route("/media/invitation.png")
 def serve_invitation_image():
     """خدمة صورة الدعوة مع Content-Type صحيح"""
-    img_path = os.path.join("static", "invitation.png")
-    if os.path.exists(img_path):
-        return send_file(img_path, mimetype="image/png")
-    return "Image not found", 404
+    return send_file("static/invitation.png", mimetype="image/png")
 
 
 @app.route("/invitation-image")
 def serve_invitation_image_alt():
     """تقديم صورة الدعوة (رابط بديل)"""
-    img_path = os.path.join("static", "invitation.png")
-    if os.path.exists(img_path):
-        return send_file(img_path, mimetype="image/png")
-    return "Image not found", 404
+    return send_file("static/invitation.png", mimetype="image/png")
 
 
 @app.route("/media/job_fair_image.png")
 def serve_job_fair_image():
     """تقديم صورة ملتقى الكفاءات - لاستخدامها مع Twilio (يتجنب 63019 من GitHub)"""
-    img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "job_fair_image.png")
-    if os.path.exists(img_path):
-        return send_file(img_path, mimetype="image/png")
-    return "Image not found", 404
+    return send_file("job_fair_image.png", mimetype="image/png")
 
 
 @app.route("/decline_form.html")
 def serve_decline_form():
     """عرض صفحة الاعتذار"""
-    if os.path.exists("decline_form.html"):
-        return send_file("decline_form.html")
-    return "File not found", 404
+    return send_file("decline_form.html")
 
 
 @app.route("/job_fair_invitation.html")
 def serve_job_fair_invitation():
     """عرض صفحة دعوة ملتقى التوظيف"""
-    if os.path.exists("job_fair_invitation.html"):
-        return send_file("job_fair_invitation.html")
-    return "File not found", 404
+    return send_file("job_fair_invitation.html")
 
 
 @app.route("/webhook/decline", methods=["POST"])
