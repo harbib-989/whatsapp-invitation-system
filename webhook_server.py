@@ -626,30 +626,7 @@ def send_single_invitation(to_phone, name, content_sid=None, template_id=None, p
         f"_الكلية التقنية بالأحساء_"
     )
 
-    # محاولة 1: نص + صورة (يتجنب خطأ 63019 في قوالب Content)
-    try:
-        msg_params = {
-            "body": body,
-            "from_": FROM_PHONE,
-            "to": f"whatsapp:+{to_phone}"
-        }
-        if image_url:
-            msg_params["media_url"] = [image_url]
-        msg = client.messages.create(**msg_params)
-        msg_type = "text_with_image" if image_url else "text"
-        logger.info(f"✅ تم إرسال دعوة ({msg_type}) إلى {name}")
-        return True, msg.sid, msg_type
-    except Exception as e:
-        logger.warning(f"⚠️ فشل إرسال نص+صورة (قد يكون خطأ 63019): {e}")
-        # محاولة بدون صورة
-        try:
-            msg = client.messages.create(body=body, from_=FROM_PHONE, to=f"whatsapp:+{to_phone}")
-            logger.info(f"✅ تم إرسال دعوة نصية إلى {name}")
-            return True, msg.sid, "text"
-        except Exception as e2:
-            logger.warning(f"⚠️ فشل إرسال نص: {e2}")
-    
-    # محاولة 2: WhatsApp Card (إن فشل الأول - قد يعطي خطأ 63019 إذا الصورة في القالب معطلة)
+    # محاولة 1: قالب Content (معتمد من WhatsApp)
     try:
         msg = client.messages.create(
             content_sid=content_sid,
@@ -657,8 +634,16 @@ def send_single_invitation(to_phone, name, content_sid=None, template_id=None, p
             from_=FROM_PHONE,
             to=f"whatsapp:+{to_phone}"
         )
-        logger.info(f"✅ تم إرسال دعوة بأزرار WhatsApp Card إلى {name}")
-        return True, msg.sid, "whatsapp_card"
+        logger.info(f"✅ تم إرسال دعوة بأزرار WhatsApp إلى {name}")
+        return True, msg.sid, "whatsapp_template"
+    except Exception as e:
+        logger.warning(f"⚠️ فشل القالب: {e}")
+    
+    # محاولة 2: نص فقط (بدون صورة)
+    try:
+        msg = client.messages.create(body=body, from_=FROM_PHONE, to=f"whatsapp:+{to_phone}")
+        logger.info(f"✅ تم إرسال دعوة نصية إلى {name}")
+        return True, msg.sid, "text"
     except Exception as e:
         logger.error(f"❌ فشل إرسال الدعوة إلى {name}: {e}")
         return False, str(e), "error"
