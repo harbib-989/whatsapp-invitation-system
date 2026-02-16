@@ -63,7 +63,7 @@ FROM_PHONE = os.environ.get("TWILIO_FROM_PHONE", "whatsapp:+966550308539")
 # قوالب المحتوى
 DIALOGUE_CONTENT_SID = "HX5f92c7470551312f6d1d461f16dafdb6"  # حوار: دور الرؤية
 JOB_FAIR_CONTENT_SID = "HX7f91572f7f87564aa0265dbe20b6ae12"   # ملتقى الكفاءات - دعوة عامة
-JOB_FAIR_VIP_CARD_SID = "HXa6a9d1d0e54d1271b1c2628d3ac6d8c7"  # ملتقى الكفاءات - دعوة رسمية VIP Card
+JOB_FAIR_VIP_CARD_SID = "HX0b25b1f0ba0489585725958a0db45ce1"  # ملتقى الكفاءات - دعوة رسمية VIP Card (معتمد مع صورة Render)
 
 def get_available_templates():
     """القوالب المتاحة للاختيار عند الإرسال"""
