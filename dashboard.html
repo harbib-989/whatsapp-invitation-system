@@ -732,6 +732,14 @@
                 </div>
 
                 <div class="send-result" id="sendResult"></div>
+
+                <!-- تلميح: إصلاح وصول الدعوة مع الصورة -->
+                <div class="image-url-hint" id="imageUrlHint" style="display:none; margin-top:14px; padding:12px 16px; background:#e3f2fd; border-radius:10px; border:1px solid #90caf9; font-size:13px;">
+                    <strong>🖼️ إذا لم تصل الدعوة (مع صورة):</strong><br>
+                    رابط الصورة مخزّن داخل القالب في Twilio. غيّره إلى الرابط التالي (يعمل مع واتساب):<br>
+                    <a href="#" id="imageUrlLink" target="_blank" rel="noopener" style="word-break:break-all; color:#1565c0;"></a><br>
+                    <small>Twilio Console → Content → technicalcompetenciesforum → Media URL ← الصق الرابط أعلاه</small>
+                </div>
             </div>
         </div>
 
@@ -883,6 +891,20 @@
             }
             togglePositionField();
             updateBulkHint();
+            updateImageUrlHint();
+        }
+
+        function updateImageUrlHint() {
+            const sendSel = document.getElementById('sendTemplate');
+            const bulkSel = document.getElementById('bulkTemplate');
+            const tid = (sendSel && sendSel.value) || (bulkSel && bulkSel.value);
+            const hint = document.getElementById('imageUrlHint');
+            const link = document.getElementById('imageUrlLink');
+            if (!hint || !link) return;
+            const imageUrl = `${API_BASE.replace(/\/$/, '')}/media/job_fair_image.png`;
+            link.href = imageUrl;
+            link.textContent = imageUrl;
+            hint.style.display = (tid === 'vip_card' || tid === 'standard') ? 'block' : 'none';
         }
 
         function togglePositionField() {
@@ -895,6 +917,7 @@
             } else {
                 f.classList.remove('show');
             }
+            updateImageUrlHint();
         }
 
         function updateBulkHint() {
@@ -906,6 +929,7 @@
             } else {
                 hint.textContent = 'كل سطر: الاسم، رقم الجوال. مثال: أحمد محمد ، 0551234567';
             }
+            updateImageUrlHint();
         }
 
         async function refreshData() {
