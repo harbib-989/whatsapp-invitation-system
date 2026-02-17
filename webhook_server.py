@@ -604,9 +604,12 @@ def send_single_invitation(to_phone, name, content_sid=None, template_id=None, p
     else:
         is_vip = any(t.get("variables") == 2 and t["content_sid"] == content_sid for t in get_available_templates())
 
-    # متغيرات القالب: القالب الرسمي يستخدم الاسم + المنصب (مثل: مدير الإدارة، رئيس القسم)
+    # متغيرات القالب: القالب المعتمد "دعوة رسمية" يستخدم متغيرين (الاسم + المنصب)
+    # عند استخدام نفس content_sid للدعوة العامة والرسمية نمرّر دائماً 2 متغيرات لتفادي رفض Twilio
     if is_vip:
         content_vars = {"1": name, "2": position.strip() if position else "الكرام"}
+    elif content_sid == JOB_FAIR_CONTENT_SID or content_sid == JOB_FAIR_VIP_CARD_SID:
+        content_vars = {"1": name, "2": "الكرام"}
     else:
         content_vars = {"1": name}
 
@@ -646,16 +649,18 @@ def send_single_invitation(to_phone, name, content_sid=None, template_id=None, p
         logger.info(f"✅ تم إرسال دعوة بأزرار WhatsApp إلى {name}")
         return True, msg.sid, "whatsapp_template"
     except Exception as e:
-        logger.warning(f"⚠️ فشل القالب: {e}")
+        err_msg = str(e)
+        logger.warning(f"⚠️ فشل القالب إلى {name}: {err_msg}")
     
-    # محاولة 2: نص فقط (بدون صورة)
+    # محاولة 2: نص فقط (بدون صورة) - قد يفشل إذا المستلم لم يرد خلال 24 ساعة
     try:
         msg = client.messages.create(body=body, from_=FROM_PHONE, to=f"whatsapp:+{to_phone}")
         logger.info(f"✅ تم إرسال دعوة نصية إلى {name}")
         return True, msg.sid, "text"
     except Exception as e:
-        logger.error(f"❌ فشل إرسال الدعوة إلى {name}: {e}")
-        return False, str(e), "error"
+        err_msg = str(e)
+        logger.error(f"❌ فشل إرسال الدعوة إلى {name}: {err_msg}")
+        return False, err_msg, "error"
 
 
 @app.route("/api/send", methods=["POST"])

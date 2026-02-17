@@ -876,7 +876,13 @@
                 sel.appendChild(opt.cloneNode(true));
                 bulkSel.appendChild(opt);
             });
+            // افتراضي: دعوة رسمية VIP (القالب المعتمد الذي يصل للمستلمين)
+            const preferred = availableTemplates.find(t => t.id === 'vip_card') || availableTemplates.find(t => t.id === 'vip') || availableTemplates[0];
+            if (preferred) {
+                sel.value = bulkSel.value = preferred.id;
+            }
             togglePositionField();
+            updateBulkHint();
         }
 
         function togglePositionField() {
@@ -1274,13 +1280,25 @@
                 const data = await res.json();
 
                 if (data.success) {
-                    resultDiv.className = 'send-result success';
-                    resultDiv.textContent = `✅ تم إرسال ${data.sent} من ${data.total} دعوة بنجاح!`;
-                    document.getElementById('bulkList').value = '';
-                    showToast(`تم إرسال ${data.sent} دعوة`, 'success');
+                    const failed = (data.results || []).filter(r => r.status === 'فشل' || r.status === 'خطأ');
+                    if (data.sent < data.total && failed.length > 0) {
+                        resultDiv.className = 'send-result error';
+                        let msg = `✅ تم إرسال ${data.sent} من ${data.total} دعوة. ❌ فشل ${failed.length}:`;
+                        failed.slice(0, 3).forEach(r => { msg += `\n• ${r.name}: ${r.error || r.status}`; });
+                        if (failed.length > 3) msg += `\n... و ${failed.length - 3} أخرى`;
+                        resultDiv.textContent = msg;
+                        resultDiv.style.whiteSpace = 'pre-line';
+                    } else {
+                        resultDiv.className = 'send-result success';
+                        resultDiv.textContent = `✅ تم إرسال ${data.sent} من ${data.total} دعوة بنجاح!`;
+                        resultDiv.style.whiteSpace = '';
+                    }
+                    if (data.sent === data.total) document.getElementById('bulkList').value = '';
+                    showToast(data.sent === data.total ? `تم إرسال ${data.sent} دعوة` : `تم ${data.sent}، فشل ${failed.length}`, data.sent === data.total ? 'success' : 'error');
                 } else {
                     resultDiv.className = 'send-result error';
                     resultDiv.textContent = `❌ ${data.error}`;
+                    resultDiv.style.whiteSpace = '';
                 }
             } catch (e) {
                 resultDiv.className = 'send-result error';
