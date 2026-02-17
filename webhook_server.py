@@ -63,7 +63,7 @@ FROM_PHONE = os.environ.get("TWILIO_FROM_PHONE", "whatsapp:+966550308539")
 # قوالب المحتوى
 DIALOGUE_CONTENT_SID = "HX5f92c7470551312f6d1d461f16dafdb6"  # حوار: دور الرؤية
 JOB_FAIR_CONTENT_SID = "HX7f91572f7f87564aa0265dbe20b6ae12"   # ملتقى الكفاءات - دعوة عامة
-JOB_FAIR_VIP_CARD_SID = "HX0b25b1f0ba0489585725958a0db45ce1"  # ملتقى الكفاءات - دعوة رسمية VIP Card (معتمد مع صورة Render)
+JOB_FAIR_VIP_CARD_SID = "HX7f91572f7f87564aa0265dbe20b6ae12"  # ملتقى الكفاءات - دعوة رسمية VIP Card (مزامنة مع config.json)
 
 def get_available_templates():
     """القوالب المتاحة للاختيار عند الإرسال"""
@@ -795,14 +795,16 @@ def serve_invitation():
 
 @app.route("/media/invitation.png")
 def serve_invitation_image():
-    """خدمة صورة الدعوة مع Content-Type صحيح"""
-    return send_file("static/invitation.png", mimetype="image/png")
+    """خدمة صورة الدعوة مع Content-Type صحيح (مع fallback لصورة الملتقى)"""
+    path = "static/invitation.png" if os.path.exists("static/invitation.png") else "job_fair_image.png"
+    return send_file(path, mimetype="image/png")
 
 
 @app.route("/invitation-image")
 def serve_invitation_image_alt():
     """تقديم صورة الدعوة (رابط بديل)"""
-    return send_file("static/invitation.png", mimetype="image/png")
+    path = "static/invitation.png" if os.path.exists("static/invitation.png") else "job_fair_image.png"
+    return send_file(path, mimetype="image/png")
 
 
 @app.route("/media/job_fair_image.png")
@@ -849,9 +851,10 @@ def webhook_decline():
         responses = load_responses()
         
         decline_data = {
+            "id": int(datetime.now().timestamp() * 1000),
             "name": name,
             "phone": formatted_phone,
-            "status": "decline",
+            "status": "اعتذار",
             "reason": reason,
             "details": details,
             "future_events": future_events,
@@ -862,6 +865,7 @@ def webhook_decline():
         # تحديث أو إضافة الرد
         existing_idx = next((i for i, r in enumerate(responses) if r.get("phone") == formatted_phone), None)
         if existing_idx is not None:
+            decline_data["id"] = responses[existing_idx].get("id", decline_data["id"])
             responses[existing_idx] = decline_data
         else:
             responses.append(decline_data)
