@@ -93,8 +93,8 @@ def get_available_templates():
             "id": "vip_card",
             "name": "دعوة رسمية VIP - بطاقة مع صورة",
             "content_sid": vip_card_sid,
-            "variables": 2,
-            "position_required": True,
+            "variables": 1,  # قالب technicalcompetenciesforum: متغير واحد {{1}} = الاسم فقط
+            "position_required": False,
         })
     return templates
 
@@ -604,12 +604,11 @@ def send_single_invitation(to_phone, name, content_sid=None, template_id=None, p
     else:
         is_vip = any(t.get("variables") == 2 and t["content_sid"] == content_sid for t in get_available_templates())
 
-    # متغيرات القالب: القالب المعتمد "دعوة رسمية" يستخدم متغيرين (الاسم + المنصب)
-    # عند استخدام نفس content_sid للدعوة العامة والرسمية نمرّر دائماً 2 متغيرات لتفادي رفض Twilio
+    # متغيرات القالب:
+    # - vip (دعوة رسمية للمسؤولين نصية): متغيران {{1}} الاسم، {{2}} المنصب
+    # - technicalcompetenciesforum / بطاقة مع صورة (HX7f91572...): متغير واحد {{1}} الاسم فقط
     if is_vip:
         content_vars = {"1": name, "2": position.strip() if position else "الكرام"}
-    elif content_sid == JOB_FAIR_CONTENT_SID or content_sid == JOB_FAIR_VIP_CARD_SID:
-        content_vars = {"1": name, "2": "الكرام"}
     else:
         content_vars = {"1": name}
 

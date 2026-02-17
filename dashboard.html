@@ -876,8 +876,8 @@
                 sel.appendChild(opt.cloneNode(true));
                 bulkSel.appendChild(opt);
             });
-            // افتراضي: دعوة رسمية VIP (القالب المعتمد الذي يصل للمستلمين)
-            const preferred = availableTemplates.find(t => t.id === 'vip_card') || availableTemplates.find(t => t.id === 'vip') || availableTemplates[0];
+            // افتراضي: دعوة رسمية للمسؤولين (نصية) - القالب الوحيد الذي يصل للمستلمين
+            const preferred = availableTemplates.find(t => t.id === 'vip') || availableTemplates[0];
             if (preferred) {
                 sel.value = bulkSel.value = preferred.id;
             }
