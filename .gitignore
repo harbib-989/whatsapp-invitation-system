@@ -12,6 +12,8 @@ config.json
 send_log.txt
 webhook_log.txt
 send_results_*.csv
+last_*.txt
+downloaded_image.png
 
 # System
 .DS_Store
