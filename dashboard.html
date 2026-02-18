@@ -911,11 +911,14 @@
             const tid = document.getElementById('sendTemplate').value;
             const t = availableTemplates.find(x => x.id === tid);
             const f = document.getElementById('positionField');
-            if (t && t.position_required) {
-                f.classList.add('show');
-                f.querySelector('input').placeholder = 'مدير الإدارة، رئيس القسم...';
-            } else {
-                f.classList.remove('show');
+            const needPosition = (t && t.position_required) || tid === 'vip_card' || tid === 'vip';
+            if (f) {
+                if (needPosition) {
+                    f.classList.add('show');
+                    if (f.querySelector('input')) f.querySelector('input').placeholder = 'مدير الإدارة، رئيس القسم...';
+                } else {
+                    f.classList.remove('show');
+                }
             }
             updateImageUrlHint();
         }
@@ -924,10 +927,11 @@
             const tid = document.getElementById('bulkTemplate').value;
             const t = availableTemplates.find(x => x.id === tid);
             const hint = document.getElementById('bulkFormatHint');
-            if (t && t.position_required) {
-                hint.textContent = 'كل سطر: الاسم، الرقم، المنصب. مثال: سعادة مدير الإدارة، 0551234567، مدير الشؤون الإدارية';
-            } else {
-                hint.textContent = 'كل سطر: الاسم، رقم الجوال. مثال: أحمد محمد ، 0551234567';
+            const needPosition = (t && t.position_required) || tid === 'vip_card' || tid === 'vip';
+            if (hint) {
+                hint.textContent = needPosition
+                    ? 'كل سطر: الاسم، الرقم، المنصب. مثال: سعادة مدير الإدارة، 0551234567، مدير الشؤون الإدارية'
+                    : 'كل سطر: الاسم، رقم الجوال. مثال: أحمد محمد ، 0551234567';
             }
             updateImageUrlHint();
         }

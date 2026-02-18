@@ -93,8 +93,8 @@ def get_available_templates():
             "id": "vip_card",
             "name": "دعوة رسمية VIP - بطاقة مع صورة",
             "content_sid": vip_card_sid,
-            "variables": 1,  # قالب technicalcompetenciesforum: متغير واحد {{1}} = الاسم فقط
-            "position_required": False,
+            "variables": 2,  # قالب job_fair_vip_card: {{1}}=الاسم، {{2}}=المنصب
+            "position_required": True,
         })
     return templates
 
