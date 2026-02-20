@@ -591,6 +591,15 @@ def send_single_invitation(to_phone, name, content_sid=None, template_id=None, p
     else:
         is_vip = any(t.get("variables") == 2 and t["content_sid"] == content_sid for t in get_available_templates())
 
+    # تجنب 63028: إذا كان القالب المستخدم هو الدعوة الرسمية (2 متغيرات) فأرسل دائماً معاملين
+    vip_card_sid = (
+        os.environ.get("CONTENT_SID_VIP_CARD")
+        or _load_config().get("content_sid_vip_card", "")
+        or JOB_FAIR_VIP_CARD_SID
+    )
+    if content_sid == vip_card_sid:
+        is_vip = True
+
     # متغيرات القالب:
     # - vip (دعوة رسمية للمسؤولين نصية): متغيران {{1}} الاسم، {{2}} المنصب
     # - technicalcompetenciesforum / بطاقة مع صورة (HX7f91572...): متغير واحد {{1}} الاسم فقط
