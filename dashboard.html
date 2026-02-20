@@ -863,12 +863,15 @@
             try {
                 const res = await fetchWithRetry(`${API_BASE}/api/templates`, {});
                 if (res.ok) {
-                    availableTemplates = await res.json();
-                    loadTemplateOptions();
-                    return availableTemplates;
+                    const list = await res.json();
+                    availableTemplates = Array.isArray(list) && list.length > 0 ? list : [];
                 }
             } catch (e) { console.error('Failed to fetch templates:', e); }
-            return [];
+            if (availableTemplates.length === 0) {
+                availableTemplates = [{ id: 'vip_card', name: 'دعوة رسمية مع صورة', position_required: true }];
+            }
+            loadTemplateOptions();
+            return availableTemplates;
         }
 
         function loadTemplateOptions() {
@@ -876,17 +879,18 @@
             const bulkSel = document.getElementById('bulkTemplate');
             if (!sel) return;
             sel.innerHTML = '';
-            bulkSel.innerHTML = '';
+            if (bulkSel) bulkSel.innerHTML = '';
             availableTemplates.forEach(t => {
                 const opt = document.createElement('option');
                 opt.value = t.id;
                 opt.textContent = t.name;
                 sel.appendChild(opt.cloneNode(true));
-                bulkSel.appendChild(opt);
+                if (bulkSel) bulkSel.appendChild(opt.cloneNode(true));
             });
             const preferred = availableTemplates.find(t => t.id === 'vip_card') || availableTemplates[0];
             if (preferred) {
-                sel.value = bulkSel.value = preferred.id;
+                sel.value = preferred.id;
+                if (bulkSel) bulkSel.value = preferred.id;
             }
             // إخفاء قائمة نوع الدعوة إذا كان هناك قالب واحد فقط
             const templateRow = sel.closest('.form-field');
@@ -1230,7 +1234,7 @@
             btn.innerHTML = '⏳ جاري الإرسال...';
             resultDiv.className = 'send-result';
 
-            const templateId = document.getElementById('sendTemplate').value;
+            const templateId = document.getElementById('sendTemplate').value || 'vip_card';
             const position = document.getElementById('sendPosition').value.trim();
 
             try {
@@ -1278,7 +1282,7 @@
 
             const lines = text.split('\n').filter(l => l.trim());
             const recipients = [];
-            const templateId = document.getElementById('bulkTemplate').value;
+            const templateId = document.getElementById('bulkTemplate').value || 'vip_card';
             const needPosition = availableTemplates.find(t => t.id === templateId)?.position_required;
 
             for (const line of lines) {
