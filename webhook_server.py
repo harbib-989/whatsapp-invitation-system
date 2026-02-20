@@ -66,37 +66,24 @@ JOB_FAIR_CONTENT_SID = "HX7f91572f7f87564aa0265dbe20b6ae12"   # ملتقى ال�
 JOB_FAIR_VIP_CARD_SID = "HX7f91572f7f87564aa0265dbe20b6ae12"  # ملتقى الكفاءات - دعوة رسمية VIP Card (مزامنة مع config.json)
 
 def get_available_templates():
-    """القوالب المتاحة للاختيار عند الإرسال"""
+    """القوالب المتاحة للإرسال - دعوة رسمية مع صورة فقط"""
     cfg = _load_config()
-    vip_sid = os.environ.get("CONTENT_SID_VIP") or cfg.get("content_sid_vip", "")
-    vip_card_sid = os.environ.get("CONTENT_SID_VIP_CARD") or cfg.get("content_sid_vip_card", "") or JOB_FAIR_VIP_CARD_SID
-
-    templates = [
+    vip_card_sid = (
+        os.environ.get("CONTENT_SID_VIP_CARD")
+        or cfg.get("content_sid_vip_card", "")
+        or JOB_FAIR_VIP_CARD_SID
+    )
+    if not vip_card_sid:
+        return []
+    return [
         {
-            "id": "standard",
-            "name": "دعوة عامة - ملتقى الكفاءات",
-            "content_sid": JOB_FAIR_CONTENT_SID,
-            "variables": 1,
-            "position_required": False,
+            "id": "vip_card",
+            "name": "دعوة رسمية مع صورة",
+            "content_sid": vip_card_sid,
+            "variables": 2,  # {{1}}=الاسم، {{2}}=المنصب
+            "position_required": True,
         },
     ]
-    if vip_sid:
-        templates.append({
-            "id": "vip",
-            "name": "دعوة رسمية - للمسؤولين (نصية)",
-            "content_sid": vip_sid,
-            "variables": 2,
-            "position_required": True,
-        })
-    if vip_card_sid:
-        templates.append({
-            "id": "vip_card",
-            "name": "دعوة رسمية VIP - بطاقة مع صورة",
-            "content_sid": vip_card_sid,
-            "variables": 2,  # قالب job_fair_vip_card: {{1}}=الاسم، {{2}}=المنصب
-            "position_required": True,
-        })
-    return templates
 
 INVITEES_FILE = "invitees.json"
 RESPONSES_FILE = "responses.json"
@@ -671,7 +658,7 @@ def api_send_invitation():
 
     name = data.get("name", "").strip()
     phone = data.get("phone", "").strip()
-    template_id = data.get("template_id", "standard")
+    template_id = data.get("template_id", "vip_card")
     position = data.get("position", "").strip()
 
     if not name or not phone:
@@ -714,7 +701,7 @@ def api_send_bulk():
     """إرسال جماعي من لوحة التحكم"""
     data = request.get_json()
     recipients = data.get("recipients", [])
-    template_id = data.get("template_id", "standard")
+    template_id = data.get("template_id", "vip_card")
 
     if not recipients:
         return jsonify({"success": False, "error": "لا يوجد مستلمون"}), 400

@@ -708,7 +708,7 @@
                     <div class="form-field">
                         <label>نوع الدعوة</label>
                         <select id="sendTemplate" onchange="togglePositionField()">
-                            <option value="standard">دعوة عامة</option>
+                            <option value="vip_card">دعوة رسمية مع صورة</option>
                         </select>
                     </div>
                     <div class="form-field template-position" id="positionField">
@@ -884,10 +884,22 @@
                 sel.appendChild(opt.cloneNode(true));
                 bulkSel.appendChild(opt);
             });
-            // افتراضي: دعوة رسمية للمسؤولين (نصية) - القالب الوحيد الذي يصل للمستلمين
-            const preferred = availableTemplates.find(t => t.id === 'vip') || availableTemplates[0];
+            const preferred = availableTemplates.find(t => t.id === 'vip_card') || availableTemplates[0];
             if (preferred) {
                 sel.value = bulkSel.value = preferred.id;
+            }
+            // إخفاء قائمة نوع الدعوة إذا كان هناك قالب واحد فقط
+            const templateRow = sel.closest('.form-field');
+            if (templateRow && availableTemplates.length <= 1) {
+                templateRow.style.display = 'none';
+            } else if (templateRow) {
+                templateRow.style.display = '';
+            }
+            const bulkTemplateRow = bulkSel ? bulkSel.closest('p') : null;
+            if (bulkTemplateRow && availableTemplates.length <= 1) {
+                bulkTemplateRow.style.display = 'none';
+            } else if (bulkTemplateRow) {
+                bulkTemplateRow.style.display = '';
             }
             togglePositionField();
             updateBulkHint();
@@ -904,7 +916,7 @@
             const imageUrl = `${API_BASE.replace(/\/$/, '')}/media/job_fair_image.png`;
             link.href = imageUrl;
             link.textContent = imageUrl;
-            hint.style.display = (tid === 'vip_card' || tid === 'standard') ? 'block' : 'none';
+            hint.style.display = tid === 'vip_card' ? 'block' : 'none';
         }
 
         function togglePositionField() {
