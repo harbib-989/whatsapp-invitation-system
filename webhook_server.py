@@ -591,13 +591,16 @@ def send_single_invitation(to_phone, name, content_sid=None, template_id=None, p
     else:
         is_vip = any(t.get("variables") == 2 and t["content_sid"] == content_sid for t in get_available_templates())
 
-    # تجنب 63028: إذا كان القالب المستخدم هو الدعوة الرسمية (2 متغيرات) فأرسل دائماً معاملين
     vip_card_sid = (
         os.environ.get("CONTENT_SID_VIP_CARD")
         or _load_config().get("content_sid_vip_card", "")
         or JOB_FAIR_VIP_CARD_SID
     )
-    if content_sid == vip_card_sid:
+    # عند طلب "دعوة رسمية مع صورة" استخدم دائماً قالب الدعوة الرسمية ومعاملين (تجنب 63028)
+    if template_id == "vip_card" and vip_card_sid:
+        content_sid = vip_card_sid
+        is_vip = True
+    elif content_sid == vip_card_sid:
         is_vip = True
 
     # متغيرات القالب: قالب الدعوة الرسمية يتوقع بالضبط معاملين {{1}} الاسم، {{2}} المنصب
@@ -635,9 +638,11 @@ def send_single_invitation(to_phone, name, content_sid=None, template_id=None, p
 
     # محاولة 1: قالب Content (معتمد من WhatsApp)
     try:
+        cv_json = json.dumps(content_vars)
+        logger.info(f"إرسال قالب: content_sid={content_sid}, params_count={len(content_vars)}, to={to_phone}")
         msg = client.messages.create(
             content_sid=content_sid,
-            content_variables=json.dumps(content_vars),
+            content_variables=cv_json,
             from_=FROM_PHONE,
             to=f"whatsapp:+{to_phone}"
         )
