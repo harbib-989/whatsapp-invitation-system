@@ -600,13 +600,13 @@ def send_single_invitation(to_phone, name, content_sid=None, template_id=None, p
     if content_sid == vip_card_sid:
         is_vip = True
 
-    # متغيرات القالب:
-    # - vip (دعوة رسمية للمسؤولين نصية): متغيران {{1}} الاسم، {{2}} المنصب
-    # - technicalcompetenciesforum / بطاقة مع صورة (HX7f91572...): متغير واحد {{1}} الاسم فقط
+    # متغيرات القالب: قالب الدعوة الرسمية يتوقع بالضبط معاملين {{1}} الاسم، {{2}} المنصب
     if is_vip:
-        content_vars = {"1": name, "2": position.strip() if position else "الكرام"}
+        _pos = (position or "").strip() or "الكرام"
+        _name = (name or "").strip() or "المدعو"
+        content_vars = {"1": _name, "2": _pos}
     else:
-        content_vars = {"1": name}
+        content_vars = {"1": (name or "").strip() or "المدعو"}
 
     image_url = get_image_url()  # يتجنب تلقائياً raw.githubusercontent.com (63019)
 
